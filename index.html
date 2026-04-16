@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeCart | Premium Developer Gear</title>
+    <meta name="description" content="The official BackForge Hackathon store for premium developer gear and digital assets.">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <a href="index.html" class="nav-brand">
+            <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
+        </a>
+        <div class="nav-links" id="auth-links">
+            <a href="orders.html" class="nav-link" style="margin-right: 15px;" title="Order History"><i class="fas fa-box-open"></i></a>
+            <a href="cart.html" class="nav-link" style="margin-right: 15px;" title="View Cart"><i class="fas fa-shopping-cart"></i></a>
+            <a href="login.html" class="nav-link">Sign In</a>
+            <a href="register.html" class="btn">Sign Up</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Equip for the <br><span>Ultimate Build</span></h1>
+            <p>Exclusive merchandise and digital assets for the BackForge Hackathon. Elevate your developer experience with premium gear designed for extended coding sessions.</p>
+        </div>
+
+        <div class="filter-bar glass">
+            <div class="search-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" class="form-control search-input" placeholder="Search premium gear, digital assets...">
+            </div>
+            <select id="category-filter" class="form-control category-select">
+                <option value="all">All Categories</option>
+                <option value="clothing">Premium Apparel</option>
+                <option value="digital">Digital Assets</option>
+                <option value="accessories">Accessories</option>
+            </select>
+        </div>
+
+        <div id="product-grid" class="product-grid">
+            <!-- Static Product 1 -->
+            <div class="glass product-card">
+                <a href="product.html" style="text-decoration: none;">
+                    <div class="product-img-wrapper">
+                        <img src="assets/images/hoodie.png" alt="Hackathon Hoodie 2026" class="product-img">
+                    </div>
+                </a>
+                <div class="product-category"><i class="fas fa-tag" style="font-size:0.7rem; margin-right:4px;"></i> clothing</div>
+                <a href="product.html" style="text-decoration: none;">
+                    <h3 class="product-title">Hackathon Hoodie 2026</h3>
+                </a>
+                <div class="product-footer">
+                    <div class="product-price">$59.99</div>
+                    <button class="btn-add-circle" title="Deploy to Cart">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Static Product 2 -->
+            <div class="glass product-card">
+                <a href="product.html" style="text-decoration: none;">
+                    <div class="product-img-wrapper">
+                        <img src="assets/images/tshirt.png" alt="Code Powered T-Shirt" class="product-img">
+                    </div>
+                </a>
+                <div class="product-category"><i class="fas fa-tag" style="font-size:0.7rem; margin-right:4px;"></i> clothing</div>
+                <a href="product.html" style="text-decoration: none;">
+                    <h3 class="product-title">Code Powered T-Shirt</h3>
+                </a>
+                <div class="product-footer">
+                    <div class="product-price">$29.99</div>
+                    <button class="btn-add-circle" title="Deploy to Cart">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Static Product 3 -->
+            <div class="glass product-card">
+                <a href="product.html" style="text-decoration: none;">
+                    <div class="product-img-wrapper">
+                        <img src="assets/images/backpack.png" alt="Premium Dev Backpack" class="product-img">
+                    </div>
+                </a>
+                <div class="product-category"><i class="fas fa-tag" style="font-size:0.7rem; margin-right:4px;"></i> accessories</div>
+                <a href="product.html" style="text-decoration: none;">
+                    <h3 class="product-title">Premium Dev Backpack</h3>
+                </a>
+                <div class="product-footer">
+                    <div class="product-price">$89.99</div>
+                    <button class="btn-add-circle" title="Deploy to Cart">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Static Product 4 -->
+            <div class="glass product-card">
+                <a href="product.html" style="text-decoration: none;">
+                    <div class="product-img-wrapper">
+                        <img src="assets/images/api_token.png" alt="API Access Token (1Yr)" class="product-img">
+                    </div>
+                </a>
+                <div class="product-category"><i class="fas fa-tag" style="font-size:0.7rem; margin-right:4px;"></i> digital</div>
+                <a href="product.html" style="text-decoration: none;">
+                    <h3 class="product-title">API Access Token (1Yr)</h3>
+                </a>
+                <div class="product-footer">
+                    <div class="product-price">$149.99</div>
+                    <button class="btn-add-circle" title="Deploy to Cart">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fas fa-layer-group"></i> ForgeCart
+                <span>· BackForge 2026</span>
+            </div>
+            <div class="footer-links">
+                <a href="index.html">Store</a>
+                <a href="cart.html">Cart</a>
+                <a href="orders.html">Orders</a>
+                <a href="login.html">Account</a>
+            </div>
+            <div class="footer-copy">
+                Built for the BackForge Hackathon · Designed with precision
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

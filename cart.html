@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeCart | Cart</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <a href="index.html" class="nav-brand">
+            <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
+        </a>
+        <div class="nav-links">
+            <a href="orders.html" class="nav-link" style="margin-right: 15px;" title="Order History"><i class="fas fa-box-open"></i></a>
+            <a href="cart.html" class="nav-link" style="margin-right: 15px;" title="View Cart"><i class="fas fa-shopping-cart"></i></a>
+            <a href="login.html" class="nav-link">Sign In</a>
+            <a href="register.html" class="btn">Sign Up</a>
+        </div>
+    </nav>
+
+    <div class="container" id="cart-container">
+        <div class="page-header">
+            <h1 class="page-title">Active Payload</h1>
+        </div>
+        <div class="cart-layout">
+            <div id="cart-items-list" class="cart-items">
+                <!-- Static Cart Item 1 -->
+                <div class="glass cart-item">
+                    <img src="assets/images/hoodie.png" alt="Hackathon Hoodie 2026" class="cart-item-img">
+                    <div class="cart-item-info">
+                        <div class="cart-item-title">Hackathon Hoodie 2026</div>
+                        <div class="cart-item-price">$59.99</div>
+                    </div>
+                    <div class="cart-qty-ctrl">
+                        <button class="qty-btn"><i class="fas fa-minus"></i></button>
+                        <span class="qty-val">1</span>
+                        <button class="qty-btn"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div class="cart-item-total">$59.99</div>
+                    <button class="icon-btn">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                
+                <!-- Static Cart Item 2 -->
+                <div class="glass cart-item">
+                    <img src="assets/images/stickers.png" alt="Developer Sticker Pack" class="cart-item-img">
+                    <div class="cart-item-info">
+                        <div class="cart-item-title">Developer Sticker Pack</div>
+                        <div class="cart-item-price">$14.99</div>
+                    </div>
+                    <div class="cart-qty-ctrl">
+                        <button class="qty-btn"><i class="fas fa-minus"></i></button>
+                        <span class="qty-val">2</span>
+                        <button class="qty-btn"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <div class="cart-item-total">$29.98</div>
+                    <button class="icon-btn">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="glass cart-summary">
+                <h3 style="margin-bottom: 25px; font-family: 'Outfit', sans-serif;">System Status</h3>
+                <div class="summary-total">
+                    <span>Subtotal</span>
+                    <span id="summary-total-amt" style="color: var(--primary);">$89.97</span>
+                </div>
+                <button class="btn btn-block" style="padding: 16px; font-size: 1.1rem; margin-top: 10px;" id="checkout-btn">
+                    Proceed to Checkout <i class="fas fa-arrow-right" style="margin-left: 5px;"></i>
+                </button>
+                <div style="margin-top:25px; font-size: 0.85rem; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-shield-alt"></i> Encrypted Transaction via ForgeCart
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fas fa-layer-group"></i> ForgeCart
+                <span>· BackForge 2026</span>
+            </div>
+            <div class="footer-links">
+                <a href="index.html">Store</a>
+                <a href="cart.html">Cart</a>
+                <a href="orders.html">Orders</a>
+                <a href="login.html">Account</a>
+            </div>
+            <div class="footer-copy">
+                Built for the BackForge Hackathon · Designed with precision
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

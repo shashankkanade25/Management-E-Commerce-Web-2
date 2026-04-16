@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeCart | Secure Checkout</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <a href="index.html" class="nav-brand">
+            <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
+        </a>
+        <div class="nav-links">
+            <a href="orders.html" class="nav-link" style="margin-right: 15px;" title="Order History"><i class="fas fa-box-open"></i></a>
+            <a href="cart.html" class="nav-link" style="margin-right: 15px;" title="View Cart"><i class="fas fa-shopping-cart"></i></a>
+            <a href="login.html" class="nav-link">Sign In</a>
+            <a href="register.html" class="btn">Sign Up</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Finalize Execution</h1>
+        </div>
+        <div class="cart-layout">
+            <div class="glass" style="padding: 40px;">
+                <h3 style="margin-bottom: 25px; color: var(--text-main); font-family: 'Outfit', sans-serif;">Delivery Parameters</h3>
+                <form id="checkout-form">
+                    <div class="form-group">
+                        <label>Target Identity (Full Name)</label>
+                        <input type="text" id="fullname" class="form-control" placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Communication Node (Email)</label>
+                        <input type="text" id="email" class="form-control" placeholder="john@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Physical Node (Address)</label>
+                        <textarea id="address" class="form-control" rows="4" placeholder="123 Main St, Appt 4B..."></textarea>
+                    </div>
+                    
+                    <button type="button" class="btn btn-block" style="padding: 16px; font-size: 1.1rem; margin-top: 30px;">
+                        <i class="fas fa-lock"></i> Authorize & Compile Order
+                    </button>
+                </form>
+            </div>
+            
+            <div class="glass cart-summary">
+                <h3 style="margin-bottom: 25px; font-family: 'Outfit', sans-serif;">Payload Summary</h3>
+                <div id="checkout-items-summary" style="margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px dashed var(--card-border);">
+                    <div class="flex justify-between items-center mb-2" style="font-size: 0.95rem;">
+                        <span class="text-muted"><i class="fas fa-layer-group" style="font-size: 0.8rem; margin-right: 5px; color: var(--primary);"></i> Hackathon Hoodie 2026 <span style="background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; margin-left: 5px;">x1</span></span>
+                        <span>$59.99</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-2" style="font-size: 0.95rem;">
+                        <span class="text-muted"><i class="fas fa-layer-group" style="font-size: 0.8rem; margin-right: 5px; color: var(--primary);"></i> Developer Sticker Pack <span style="background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; margin-left: 5px;">x2</span></span>
+                        <span>$29.98</span>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center text-muted mb-2">
+                    <span>Transmission Protocol</span>
+                    <span style="color: var(--success); font-weight: 500;">Free / Instant</span>
+                </div>
+                <div class="summary-total" style="border-top: none; padding-top: 0; margin-top: 10px;">
+                    <span>Total Resource</span>
+                    <span id="checkout-total" style="color: var(--primary);">$89.97</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fas fa-layer-group"></i> ForgeCart
+                <span>· BackForge 2026</span>
+            </div>
+            <div class="footer-links">
+                <a href="index.html">Store</a>
+                <a href="cart.html">Cart</a>
+                <a href="orders.html">Orders</a>
+                <a href="login.html">Account</a>
+            </div>
+            <div class="footer-copy">
+                Built for the BackForge Hackathon · Designed with precision
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
