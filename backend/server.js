@@ -11,13 +11,10 @@ const Product = require('./models/Product');
 // Load env vars
 dotenv.config();
 
-// Connect to database
-connectDB();
-
 const app = express();
 
 // ─── Background Sweep: Stock Reservations ──────────────────────────────────
-setInterval(async () => {
+const startReservationSweep = () => setInterval(async () => {
     try {
         const expired = await Reservation.find({ 
             status: 'active', 
@@ -61,11 +58,42 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 // MongoDB sanitizer — strips $ and . from user inputs to prevent NoSQL injection
 app.use(mongoSanitize());
 
+// Keep DB connection lazy so Vercel function boot does not crash on cold start.
+app.use('/api', async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        console.error('[DB]', err.message);
+        next(err);
+    }
+});
+
 // Global rate limiter — 100 req/15min per IP
 app.use('/api', globalLimiter);
 
 // Serve the frontend static files
 app.use(express.static(path.join(__dirname, '..')));
+
+app.get('/', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: 'ForgeCart backend is running',
+        data: { status: 'ok' }
+    });
+});
+
+app.get('/api/health', (req, res) => {
+    const dbReady = Reservation.db.readyState === 1;
+    res.status(dbReady ? 200 : 503).json({
+        success: dbReady,
+        message: dbReady ? 'API healthy' : 'API up, database disconnected',
+        data: {
+            uptime: process.uptime(),
+            dbState: Reservation.db.readyState
+        }
+    });
+});
 
 // ─── API Routes ────────────────────────────────────────────────────────────
 const authRoutes    = require('./routes/authRoutes');
@@ -130,7 +158,20 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`✅ ForgeCart server running on http://localhost:${PORT}`);
-    console.log(`🔒 Security: mongo-sanitize, rate-limiting, body-size limit active`);
-});
+
+if (require.main === module) {
+    connectDB()
+        .then(() => {
+            startReservationSweep();
+            app.listen(PORT, () => {
+                console.log(`✅ ForgeCart server running on http://localhost:${PORT}`);
+                console.log('Security middleware active: mongo-sanitize, rate-limiting, body-size limit');
+            });
+        })
+        .catch((err) => {
+            console.error('Failed to start server:', err.message);
+            process.exit(1);
+        });
+}
+
+module.exports = app;
