@@ -6,16 +6,57 @@
     <title>ForgeCart | Command Center</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .admin-tabs { display:flex; gap:4px; margin-bottom:32px; border-bottom:1px solid var(--card-border); }
+        .admin-tab {
+            padding:12px 20px; cursor:pointer; font-size:0.9rem; font-weight:600;
+            color:var(--text-muted); border-bottom:2px solid transparent;
+            transition:all 0.2s; letter-spacing:0.5px;
+        }
+        .admin-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+        .admin-tab:hover:not(.active) { color:var(--text-main); }
+        .admin-panel { display:none; }
+        .admin-panel.active { display:block; }
+
+        /* Status dropdown in table */
+        .status-select {
+            background:var(--bg-card); color:var(--text-main);
+            border:1px solid var(--card-border); border-radius:8px;
+            padding:5px 10px; font-size:0.82rem; cursor:pointer;
+            transition:border-color 0.2s;
+        }
+        .status-select:hover { border-color:var(--primary); }
+        .status-select:disabled { opacity:0.4; cursor:not-allowed; }
+
+        /* Log item */
+        .log-item {
+            padding:12px 16px; border-bottom:1px solid var(--card-border);
+            display:flex; gap:12px; align-items:flex-start;
+        }
+        .log-item:last-child { border-bottom:none; }
+        .log-icon { width:32px; height:32px; border-radius:50%; display:flex;
+            align-items:center; justify-content:center; flex-shrink:0; font-size:0.8rem; }
+        .log-icon.product { background:rgba(0,230,118,0.12); color:var(--primary); }
+        .log-icon.order   { background:rgba(100,149,237,0.12); color:cornflowerblue; }
+        .log-icon.user    { background:rgba(240,173,78,0.12); color:#f0ad4e; }
+
+        /* Stat trend badges */
+        .stat-meta { font-size:0.75rem; margin-top:4px; color:var(--text-dim); }
+        .status-counts { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+        .sc-pill { padding:2px 8px; border-radius:12px; font-size:0.73rem; font-weight:600; }
+        .sc-pending   { background:rgba(240,173,78,0.15);  color:#f0ad4e; }
+        .sc-shipped   { background:rgba(100,149,237,0.15); color:cornflowerblue; }
+        .sc-delivered { background:rgba(0,230,118,0.15);   color:var(--primary,#00e676); }
+        .sc-cancelled { background:rgba(255,107,107,0.15); color:#ff6b6b; }
+    </style>
 </head>
 <body>
     <nav class="navbar" id="navbar">
-        <a href="index.html" class="nav-brand">
-            <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
-        </a>
+        <a href="index.html" class="nav-brand"><i class="fas fa-layer-group"></i> <span>ForgeCart</span></a>
         <div class="nav-links">
-            <a href="admin.html" class="nav-link nav-admin-link" id="nav-admin-link" style="margin-right: 15px; color:var(--primary);" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
-            <a href="orders.html" class="nav-link" style="margin-right: 15px;" title="Order History"><i class="fas fa-box-open"></i></a>
-            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right: 15px;" title="View Cart">
+            <a href="admin.html" class="nav-link" id="nav-admin-link" style="margin-right:15px;color:var(--primary);" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
+            <a href="orders.html" class="nav-link" style="margin-right:15px;"><i class="fas fa-box-open"></i></a>
+            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right:15px;">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="nav-cart-badge" id="cart-badge-count" style="display:none;">0</span>
             </a>
@@ -24,146 +65,417 @@
         </div>
     </nav>
 
+    <!-- ── Unauthorized ───────────────────────────────────────────────────── -->
+    <div class="container" id="unauth-message" style="display:none;text-align:center;padding:100px 0;">
+        <i class="fas fa-radiation" style="font-size:4rem;color:var(--danger,#ff6b6b);margin-bottom:20px;"></i>
+        <h2 style="color:var(--danger,#ff6b6b);margin-bottom:10px;font-size:2rem;">ACCESS RESTRICTED</h2>
+        <p style="color:var(--text-muted);margin-bottom:24px;max-width:400px;margin-left:auto;margin-right:auto;">
+            This area requires admin clearance.
+        </p>
+        <a href="index.html" class="btn"><i class="fas fa-arrow-left"></i> Return to Safe Zone</a>
+    </div>
+
+    <!-- ── Admin Container ───────────────────────────────────────────────── -->
     <div class="container" id="admin-container" style="display:none;">
         <div class="page-header">
-            <h1 class="page-title"><i class="fas fa-satellite-dish" style="font-size:1.6rem; color:var(--primary); margin-right:12px;"></i>Command Center</h1>
-            <button class="btn btn-outline" onclick="loadAdminStats()"><i class="fas fa-sync-alt"></i> Refresh Telemetry</button>
+            <h1 class="page-title">
+                <i class="fas fa-satellite-dish" style="font-size:1.6rem;color:var(--primary);margin-right:12px;"></i>Command Center
+            </h1>
+            <button class="btn btn-outline" onclick="refreshCurrentTab()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
         </div>
 
-        <div class="admin-stats-grid">
+        <!-- Stats Grid -->
+        <div class="admin-stats-grid" style="margin-bottom:32px;">
             <div class="glass stat-card">
                 <div class="stat-card-icon"><i class="fas fa-users"></i></div>
-                <div class="stat-card-value" id="stat-users">0</div>
+                <div class="stat-card-value" id="stat-users">—</div>
                 <div class="stat-card-label">Active Nodes (Users)</div>
             </div>
             <div class="glass stat-card">
                 <div class="stat-card-icon"><i class="fas fa-boxes"></i></div>
-                <div class="stat-card-value" id="stat-products">0</div>
+                <div class="stat-card-value" id="stat-products">—</div>
                 <div class="stat-card-label">Asset Registry (Products)</div>
             </div>
             <div class="glass stat-card">
                 <div class="stat-card-icon"><i class="fas fa-shopping-bag"></i></div>
-                <div class="stat-card-value" id="stat-orders">0</div>
+                <div class="stat-card-value" id="stat-orders">—</div>
                 <div class="stat-card-label">Executions (Orders)</div>
+                <div class="status-counts" id="stat-status-counts"></div>
             </div>
             <div class="glass stat-card">
                 <div class="stat-card-icon"><i class="fas fa-dollar-sign"></i></div>
-                <div class="stat-card-value" id="stat-revenue">$0</div>
-                <div class="stat-card-label">Total Resources</div>
+                <div class="stat-card-value" id="stat-revenue">$—</div>
+                <div class="stat-card-label">Total Revenue</div>
             </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:32px; align-items:start;">
-            <div class="glass" style="padding:32px;">
-                <h3 class="admin-section-title"><i class="fas fa-exclamation-triangle"></i> Inventory Alerts</h3>
-                <div id="low-stock-list">
-                    <p style="color:var(--text-muted); text-align:center; padding:20px 0;">Loading telemetry...</p>
-                </div>
+        <!-- Tabs -->
+        <div class="admin-tabs">
+            <div class="admin-tab active" onclick="switchTab('overview')" id="tab-overview">
+                <i class="fas fa-chart-bar" style="margin-right:6px;"></i>Overview
             </div>
-            
-            <div class="glass" style="padding:32px;">
-                <h3 class="admin-section-title"><i class="fas fa-stream"></i> Recent Executions</h3>
-                <div id="recent-orders-list">
-                    <p style="color:var(--text-muted); text-align:center; padding:20px 0;">Loading telemetry...</p>
+            <div class="admin-tab" onclick="switchTab('orders')" id="tab-orders">
+                <i class="fas fa-list-ol" style="margin-right:6px;"></i>All Orders
+            </div>
+            <div class="admin-tab" onclick="switchTab('logs')" id="tab-logs">
+                <i class="fas fa-history" style="margin-right:6px;"></i>Activity Logs
+            </div>
+        </div>
+
+        <!-- Panel: Overview -->
+        <div class="admin-panel active" id="panel-overview">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;">
+                <div class="glass" style="padding:32px;">
+                    <h3 class="admin-section-title"><i class="fas fa-exclamation-triangle"></i> Inventory Alerts</h3>
+                    <div id="low-stock-list">
+                        <p style="color:var(--text-muted);text-align:center;padding:20px 0;">Loading...</p>
+                    </div>
+                </div>
+                <div class="glass" style="padding:32px;">
+                    <h3 class="admin-section-title"><i class="fas fa-stream"></i> Recent Executions</h3>
+                    <div id="recent-orders-list">
+                        <p style="color:var(--text-muted);text-align:center;padding:20px 0;">Loading...</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="container" id="unauth-message" style="display:none; text-align:center; padding:100px 0;">
-        <i class="fas fa-radiation" style="font-size:4rem; color:var(--danger); margin-bottom:20px; animation:spinSlow 10s linear infinite;"></i>
-        <h2 style="color:var(--danger); margin-bottom:10px; font-size:2rem; font-family:'Outfit',sans-serif;">ACCESS RESTRICTED</h2>
-        <p style="color:var(--text-muted); margin-bottom:24px; max-width:400px; margin-left:auto; margin-right:auto;">This node requires Root Protocol clearance. Your current identity token lacks sufficient parameters.</p>
-        <a href="index.html" class="btn"><i class="fas fa-arrow-left"></i> Return to Safe Zone</a>
+        <!-- Panel: All Orders -->
+        <div class="admin-panel" id="panel-orders">
+            <div class="glass" style="padding:28px;">
+                <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center;">
+                    <input type="text" id="orders-search" class="form-control" placeholder="Search by Order ID..." style="max-width:240px;" oninput="debounceOrderSearch()">
+                    <select id="orders-status-filter" class="form-control" style="max-width:160px;" onchange="loadAllOrders(1)">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <button class="btn btn-outline" onclick="loadAllOrders(1)"><i class="fas fa-search"></i> Filter</button>
+                </div>
+                <div id="all-orders-table">
+                    <p style="color:var(--text-muted);text-align:center;padding:30px">Loading orders...</p>
+                </div>
+                <div id="orders-pagination" style="display:flex;justify-content:center;gap:10px;margin-top:20px;"></div>
+            </div>
+        </div>
+
+        <!-- Panel: Activity Logs -->
+        <div class="admin-panel" id="panel-logs">
+            <div class="glass" style="padding:0;overflow:hidden;">
+                <div style="padding:20px 28px;border-bottom:1px solid var(--card-border);display:flex;justify-content:space-between;align-items:center;">
+                    <h3 style="margin:0;font-family:'Outfit',sans-serif;font-size:1.05rem;">Admin Activity Log</h3>
+                    <button class="btn btn-outline btn-sm" onclick="loadActivityLogs(1)"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <div id="activity-log-list">
+                    <p style="color:var(--text-muted);text-align:center;padding:30px;">Loading...</p>
+                </div>
+                <div id="logs-pagination" style="display:flex;justify-content:center;gap:10px;padding:16px;"></div>
+            </div>
+        </div>
     </div>
 
     <footer class="site-footer">
         <div class="footer-content">
-            <div class="footer-brand">
-                <i class="fas fa-layer-group"></i> ForgeCart
-                <span>· BackForge 2026</span>
-            </div>
+            <div class="footer-brand"><i class="fas fa-layer-group"></i> ForgeCart <span>· BackForge 2026</span></div>
             <div class="footer-links">
                 <a href="index.html">Store</a>
                 <a href="cart.html">Cart</a>
                 <a href="orders.html">Orders</a>
                 <a href="profile.html">Account</a>
             </div>
-            <div class="footer-copy">
-                Built for the BackForge Hackathon · Designed with precision
-            </div>
+            <div class="footer-copy">Built for the BackForge Hackathon</div>
         </div>
     </footer>
 
     <script src="js/shared.js"></script>
     <script>
-    async function checkAdminAccess() {
-        const user = getUser();
-        if (!user || user.role !== 'admin') {
-            document.getElementById('admin-container').style.display = 'none';
-            document.getElementById('unauth-message').style.display = 'block';
-            return;
-        }
+    let activeTab = 'overview';
 
-        document.getElementById('admin-container').style.display = 'block';
-        loadAdminStats();
+    // ── Tab switching ──────────────────────────────────────────────────────
+    function switchTab(tab) {
+        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        document.getElementById('panel-' + tab).classList.add('active');
+        activeTab = tab;
+
+        if (tab === 'orders') loadAllOrders(1);
+        if (tab === 'logs')   loadActivityLogs(1);
     }
 
+    function refreshCurrentTab() {
+        loadAdminStats();
+        if (activeTab === 'orders') loadAllOrders(1);
+        if (activeTab === 'logs')   loadActivityLogs(1);
+    }
+
+    // ── Load stats ─────────────────────────────────────────────────────────
     async function loadAdminStats() {
         try {
-            const res = await fetch(`${API}/admin/stats`);
+            const res  = await apiFetch(`${API}/admin/stats`, { headers: authHeaders() });
+            const body = await res.json();
+            if (!body.success) { showToast(body.message || 'Failed to load stats', 'error'); return; }
+
+            const d = body.data;
+            document.getElementById('stat-users').textContent    = d.totalUsers;
+            document.getElementById('stat-products').textContent = d.totalProducts;
+            document.getElementById('stat-orders').textContent   = d.totalOrders;
+            document.getElementById('stat-revenue').textContent  = '$' + Number(d.totalRevenue).toLocaleString('en-US', {minimumFractionDigits:2});
+
+            // Order status pills
+            const sc = d.ordersByStatus || {};
+            document.getElementById('stat-status-counts').innerHTML = `
+                <span class="sc-pill sc-pending">⏳ ${sc.pending||0}</span>
+                <span class="sc-pill sc-shipped">🚚 ${sc.shipped||0}</span>
+                <span class="sc-pill sc-delivered">✅ ${sc.delivered||0}</span>
+                <span class="sc-pill sc-cancelled">❌ ${sc.cancelled||0}</span>
+            `;
+
+            // Low stock
+            const stockList = document.getElementById('low-stock-list');
+            if (!d.lowStockProducts || d.lowStockProducts.length === 0) {
+                stockList.innerHTML = '<p style="color:var(--success);text-align:center;padding:20px 0;"><i class="fas fa-check-circle" style="margin-right:8px;"></i>All inventory levels nominal.</p>';
+            } else {
+                stockList.innerHTML = d.lowStockProducts.map(p => `
+                    <div class="low-stock-item">
+                        <div>
+                            <div style="color:var(--text-main);font-weight:600;font-size:0.95rem;">${p.name}</div>
+                            <div style="color:var(--text-dim);font-size:0.8rem;font-family:'JetBrains Mono',monospace;">SKU: ${p.sku || 'N/A'}</div>
+                        </div>
+                        <div class="stock-count ${p.stock === 0 ? 'critical' : 'warning'}">${p.stock} units</div>
+                    </div>`).join('');
+            }
+
+            // Recent orders
+            const recentList = document.getElementById('recent-orders-list');
+            if (!d.recentOrders || d.recentOrders.length === 0) {
+                recentList.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px 0;">No orders yet.</p>';
+            } else {
+                recentList.innerHTML = d.recentOrders.map(o => `
+                    <div class="low-stock-item" style="cursor:pointer;" onclick="switchTab('orders')">
+                        <div>
+                            <div style="color:var(--text-main);font-weight:600;font-size:0.95rem;">${o.userId ? o.userId.name : 'Unknown'}</div>
+                            <div style="color:var(--text-dim);font-size:0.8rem;font-family:'JetBrains Mono',monospace;">${o.orderId || o._id.slice(-8).toUpperCase()}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="color:var(--primary);font-weight:700;">$${o.total.toFixed(2)}</div>
+                            ${getStatusBadge(o.orderStatus)}
+                        </div>
+                    </div>`).join('');
+            }
+
+            showToast('Telemetry refreshed', 'success');
+        } catch (err) {
+            if (err.message !== 'Session expired') showToast('Failed to load stats', 'error');
+        }
+    }
+
+    // ── Load all orders ────────────────────────────────────────────────────
+    let ordersCurrentPage = 1;
+    let orderSearchTimeout;
+
+    function debounceOrderSearch() {
+        clearTimeout(orderSearchTimeout);
+        orderSearchTimeout = setTimeout(() => loadAllOrders(1), 350);
+    }
+
+    async function loadAllOrders(page = 1) {
+        ordersCurrentPage = page;
+        const tableEl = document.getElementById('all-orders-table');
+        tableEl.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:30px;"><i class="fas fa-spinner fa-spin"></i> Loading...</p>';
+
+        const status = document.getElementById('orders-status-filter').value;
+        const search = document.getElementById('orders-search').value.trim();
+        const params = new URLSearchParams({ page, limit: 15 });
+        if (status) params.append('status', status);
+        if (search) params.append('search', search);
+
+        try {
+            const res  = await apiFetch(`${API}/admin/orders?${params}`, { headers: authHeaders() });
+            const body = await res.json();
+            if (!body.success) { tableEl.innerHTML = `<p style="color:#ff6b6b;text-align:center;padding:20px;">${body.message}</p>`; return; }
+
+            const { orders, pagination } = body.data;
+
+            if (!orders.length) {
+                tableEl.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:30px;">No orders found.</p>';
+                document.getElementById('orders-pagination').innerHTML = '';
+                return;
+            }
+
+            tableEl.innerHTML = `
+                <div class="table-responsive">
+                    <table class="glass" style="margin:0;width:100%;">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${orders.map(o => {
+                                const user = o.userId;
+                                // Allowed next statuses for this order
+                                const nextAllowed = o.orderStatus === 'pending'
+                                    ? ['pending','shipped','cancelled']
+                                    : o.orderStatus === 'shipped'
+                                        ? ['shipped','delivered','cancelled']
+                                        : [o.orderStatus];  // terminal — no change
+
+                                const isTerminal = ['delivered','cancelled'].includes(o.orderStatus);
+
+                                return `<tr>
+                                    <td style="font-family:monospace;color:var(--primary);font-weight:700;">${o.orderId || o._id.slice(-8).toUpperCase()}</td>
+                                    <td>
+                                        <div style="font-weight:600;font-size:0.9rem;">${user ? user.name : '—'}</div>
+                                        <div style="font-size:0.75rem;color:var(--text-dim);">${user ? user.email : ''}</div>
+                                    </td>
+                                    <td><span style="background:rgba(255,255,255,0.05);padding:4px 10px;border-radius:20px;font-size:0.83rem;">${o.items.length}</span></td>
+                                    <td style="color:var(--primary);font-weight:700;">$${o.total.toFixed(2)}</td>
+                                    <td style="color:var(--text-muted);font-size:0.83rem;">${new Date(o.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</td>
+                                    <td>
+                                        ${isTerminal
+                                            ? getStatusBadge(o.orderStatus)
+                                            : `<select class="status-select" id="sel-${o._id}"
+                                                onchange="updateOrderStatus('${o._id}', this.value, this)">
+                                                ${nextAllowed.map(s => `<option value="${s}" ${o.orderStatus===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
+                                               </select>`
+                                        }
+                                    </td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+
+            // Pagination
+            const pagEl = document.getElementById('orders-pagination');
+            if (pagination.totalPages > 1) {
+                pagEl.innerHTML = `
+                    ${pagination.page > 1 ? `<button class="btn btn-outline" onclick="loadAllOrders(${pagination.page-1})"><i class="fas fa-chevron-left"></i> Prev</button>` : ''}
+                    <span style="color:var(--text-muted);font-size:0.9rem;align-self:center;">Page ${pagination.page} / ${pagination.totalPages}</span>
+                    ${pagination.page < pagination.totalPages ? `<button class="btn btn-outline" onclick="loadAllOrders(${pagination.page+1})">Next <i class="fas fa-chevron-right"></i></button>` : ''}
+                `;
+            } else {
+                pagEl.innerHTML = '';
+            }
+
+        } catch (err) {
+            if (err.message !== 'Session expired') {
+                tableEl.innerHTML = '<p style="color:#ff6b6b;text-align:center;padding:30px;">Failed to load orders.</p>';
+            }
+        }
+    }
+
+    // ── Update order status (inline dropdown) ──────────────────────────────
+    async function updateOrderStatus(orderId, newStatus, selectEl) {
+        const originalValue = selectEl.dataset.prev || selectEl.value;
+        selectEl.disabled = true;
+
+        try {
+            const res  = await apiFetch(`${API}/orders/${orderId}/status`, {
+                method:  'PUT',
+                headers: authHeaders(),
+                body:    JSON.stringify({ orderStatus: newStatus })
+            });
             const data = await res.json();
-            
-            if (data.success) {
-                const stats = data.stats;
-                document.getElementById('stat-users').textContent = stats.totalUsers;
-                document.getElementById('stat-products').textContent = stats.totalProducts;
-                document.getElementById('stat-orders').textContent = stats.totalOrders;
-                document.getElementById('stat-revenue').textContent = '$' + Number(stats.totalRevenue).toLocaleString();
 
-                // Low stock
-                const stockList = document.getElementById('low-stock-list');
-                if (stats.lowStockProducts.length === 0) {
-                    stockList.innerHTML = '<p style="color:var(--success); text-align:center; padding:20px 0;"><i class="fas fa-check-circle" style="margin-right:8px;"></i>All inventory levels nominal.</p>';
-                } else {
-                    stockList.innerHTML = stats.lowStockProducts.map(p => `
-                        <div class="low-stock-item">
-                            <div>
-                                <div style="color:var(--text-main); font-weight:600; font-size:0.95rem;">${p.name}</div>
-                                <div style="color:var(--text-dim); font-size:0.8rem; font-family:'JetBrains Mono',monospace;">ID: ${p._id.slice(-6)}</div>
-                            </div>
-                            <div class="stock-count ${p.stock === 0 ? 'critical' : 'warning'}">
-                                ${p.stock} units
-                            </div>
-                        </div>
-                    `).join('');
-                }
-
-                // Recent Orders
-                const ordersList = document.getElementById('recent-orders-list');
-                if (stats.recentOrders.length === 0) {
-                    ordersList.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px 0;">No active executions found.</p>';
-                } else {
-                    ordersList.innerHTML = stats.recentOrders.map(o => `
-                        <div class="low-stock-item" style="cursor:pointer;" onclick="window.location.href='orders.html'">
-                            <div>
-                                <div style="color:var(--text-main); font-weight:600; font-size:0.95rem;">${o.userId ? o.userId.name : 'Unknown Node'}</div>
-                                <div style="color:var(--text-dim); font-size:0.8rem; font-family:'JetBrains Mono',monospace;">TXN: ${o._id.slice(-8).toUpperCase()}</div>
-                            </div>
-                            <div style="text-align:right;">
-                                <div style="color:var(--primary); font-weight:700;">$${o.total.toFixed(2)}</div>
-                                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${new Date(o.createdAt).toLocaleDateString()}</div>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-                
-                showToast('Telemetry refreshed', 'success');
+            if (res.ok && data.success) {
+                showToast(`Order updated to "${newStatus}"`, 'success');
+                selectEl.dataset.prev = newStatus;
+                // Refresh the table to reflect new state (terminal states become badge)
+                setTimeout(() => loadAllOrders(ordersCurrentPage), 600);
+            } else {
+                showToast(data.message || 'Update failed', 'error');
+                selectEl.value = originalValue;
+                selectEl.disabled = false;
             }
         } catch (err) {
-            console.error('Failed to load admin stats:', err);
-            showToast('Connection failed. Server offline?', 'error');
+            if (err.message !== 'Session expired') {
+                showToast('Update failed — check connection', 'error');
+                selectEl.value = originalValue;
+                selectEl.disabled = false;
+            }
         }
+    }
+
+    // ── Load activity logs ─────────────────────────────────────────────────
+    const ACTION_ICONS = {
+        product_created:      { icon:'fa-plus-circle',  cls:'product' },
+        product_updated:      { icon:'fa-edit',         cls:'product' },
+        product_deleted:      { icon:'fa-trash',        cls:'product' },
+        order_status_changed: { icon:'fa-exchange-alt', cls:'order'   },
+        user_role_changed:    { icon:'fa-user-shield',  cls:'user'    }
+    };
+
+    async function loadActivityLogs(page = 1) {
+        const listEl = document.getElementById('activity-log-list');
+        listEl.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:30px;"><i class="fas fa-spinner fa-spin"></i></p>';
+
+        try {
+            const res  = await apiFetch(`${API}/admin/logs?page=${page}&limit=20`, { headers: authHeaders() });
+            const body = await res.json();
+            if (!body.success) { listEl.innerHTML = `<p style="color:#ff6b6b;text-align:center;padding:20px;">${body.message}</p>`; return; }
+
+            const { logs, pagination } = body.data;
+
+            if (!logs.length) {
+                listEl.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:30px;">No activity yet.</p>';
+                return;
+            }
+
+            listEl.innerHTML = logs.map(log => {
+                const info = ACTION_ICONS[log.action] || { icon:'fa-info-circle', cls:'order' };
+                return `
+                <div class="log-item">
+                    <div class="log-icon ${info.cls}"><i class="fas ${info.icon}"></i></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:0.9rem;color:var(--text-main);">${log.action.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>
+                        <div style="font-size:0.82rem;color:var(--text-muted);margin-top:2px;">${log.details}</div>
+                        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px;">
+                            by <strong>${log.adminName}</strong> · ${new Date(log.createdAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Logs pagination
+            const pagEl = document.getElementById('logs-pagination');
+            if (pagination.totalPages > 1) {
+                pagEl.innerHTML = `
+                    ${page > 1 ? `<button class="btn btn-outline" onclick="loadActivityLogs(${page-1})"><i class="fas fa-chevron-left"></i></button>` : ''}
+                    <span style="color:var(--text-muted);font-size:0.85rem;align-self:center;">${page} / ${pagination.totalPages}</span>
+                    ${page < pagination.totalPages ? `<button class="btn btn-outline" onclick="loadActivityLogs(${page+1})"><i class="fas fa-chevron-right"></i></button>` : ''}
+                `;
+            } else {
+                pagEl.innerHTML = '';
+            }
+
+        } catch (err) {
+            if (err.message !== 'Session expired') {
+                listEl.innerHTML = '<p style="color:#ff6b6b;text-align:center;padding:20px;">Failed to load logs.</p>';
+            }
+        }
+    }
+
+    // ── Auth check ─────────────────────────────────────────────────────────
+    function checkAdminAccess() {
+        const user = getUser();
+        if (!user || user.role !== 'admin') {
+            document.getElementById('admin-container').style.display  = 'none';
+            document.getElementById('unauth-message').style.display   = 'block';
+            return;
+        }
+        document.getElementById('admin-container').style.display = 'block';
+        loadAdminStats();
     }
 
     checkAdminAccess();

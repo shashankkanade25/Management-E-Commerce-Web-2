@@ -1,21 +1,24 @@
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
 const {
     getProducts,
     getProductById,
     createProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getAllProductsAdmin
 } = require('../controllers/productController');
-const { protect, admin } = require('../middlewares/authMiddleware');
+const { verifyToken, isAdmin } = require('../middlewares/authMiddleware');
+const { validateProduct, validateProductUpdate } = require('../middlewares/validate');
 
-router.route('/')
-    .get(getProducts)
-    .post(protect, admin, createProduct);
+// Public routes
+router.get('/',    getProducts);
+router.get('/admin/all', verifyToken, isAdmin, getAllProductsAdmin);  // admin: includes inactive
+router.get('/:id', getProductById);
 
-router.route('/:id')
-    .get(getProductById)
-    .put(protect, admin, updateProduct)
-    .delete(protect, admin, deleteProduct);
+// Admin-protected routes with validation
+router.post('/',    verifyToken, isAdmin, validateProduct,       createProduct);
+router.put('/:id',  verifyToken, isAdmin, validateProductUpdate, updateProduct);
+router.delete('/:id', verifyToken, isAdmin, deleteProduct);
 
 module.exports = router;

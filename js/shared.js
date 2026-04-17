@@ -1,13 +1,79 @@
 // ==========================================
-// FORGECART SHARED MODULE
-// Toast Notifications, Navbar, Cart Badge, Auth State
+// FORGECART SHARED MODULE — PRODUCTION
+// Auth, Toast, Navbar, Cart Badge, API helpers
 // ==========================================
 
 const API = 'http://localhost:5000/api';
 
-// ==========================================
-// TOAST NOTIFICATION SYSTEM
-// ==========================================
+// ─── Auth Helpers ──────────────────────────────────────────────────────────
+
+function getUser() {
+    try {
+        return JSON.parse(localStorage.getItem('forgeUser') || 'null');
+    } catch {
+        return null;
+    }
+}
+
+function getToken() {
+    const user = getUser();
+    return user ? user.token : null;
+}
+
+// Auth headers for protected API calls
+function authHeaders(extra = {}) {
+    const token = getToken();
+    return {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...extra
+    };
+}
+
+// Check if token is expired (JWT exp claim is in seconds)
+function isTokenExpired() {
+    const token = getToken();
+    if (!token) return true;
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return Date.now() >= payload.exp * 1000;
+    } catch {
+        return true;
+    }
+}
+
+function logout(reason = '') {
+    localStorage.removeItem('forgeUser');
+    if (reason) showToast(reason, 'warning');
+    setTimeout(() => { window.location.href = 'login.html'; }, 800);
+}
+
+// Auto-logout on page load if token is expired (except on login/register pages)
+(function checkTokenOnLoad() {
+    const onAuthPage = ['login.html', 'register.html'].some(p => window.location.pathname.includes(p));
+    if (!onAuthPage && getUser() && isTokenExpired()) {
+        logout('Session expired — please sign in again');
+    }
+})();
+
+// ─── API call wrapper — handles 401/token-expired automatically ────────────
+async function apiFetch(url, options = {}) {
+    const response = await fetch(url, options);
+
+    // Auto-logout on token expiry or unauthorized
+    if (response.status === 401) {
+        const data = await response.json().catch(() => ({}));
+        if (data.code === 'TOKEN_EXPIRED' || (getUser() && isTokenExpired())) {
+            logout('Session expired — please sign in again');
+            throw new Error('Session expired');
+        }
+        throw new Error(data.message || 'Unauthorized');
+    }
+
+    return response;
+}
+
+// ─── Toast Notification System ─────────────────────────────────────────────
 (function initToastContainer() {
     if (!document.getElementById('toast-container')) {
         const container = document.createElement('div');
@@ -25,8 +91,8 @@ function showToast(message, type = 'success', duration = 3200) {
 
     const iconMap = {
         success: 'fa-check',
-        error: 'fa-times',
-        info: 'fa-info',
+        error:   'fa-times',
+        info:    'fa-info',
         warning: 'fa-exclamation'
     };
 
@@ -43,79 +109,66 @@ function showToast(message, type = 'success', duration = 3200) {
     }, duration);
 }
 
-// ==========================================
-// NAVBAR SCROLL EFFECT
-// ==========================================
+// ─── Navbar Scroll Effect ──────────────────────────────────────────────────
 (function initNavbarScroll() {
     const navbar = document.getElementById('navbar');
     if (!navbar) return;
 
     function checkScroll() {
-        if (window.scrollY > 30) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
+        navbar.classList.toggle('scrolled', window.scrollY > 30);
     }
 
     window.addEventListener('scroll', checkScroll, { passive: true });
     checkScroll();
 })();
 
-// ==========================================
-// AUTH STATE MANAGEMENT
-// ==========================================
-function getUser() {
-    return JSON.parse(localStorage.getItem('forgeUser') || 'null');
-}
-
+// ─── Auth State → Navbar ───────────────────────────────────────────────────
 function updateNavAuth() {
-    const user = getUser();
+    const user       = getUser();
     const signinLink = document.getElementById('nav-signin');
     const signupLink = document.getElementById('nav-signup');
+    const adminLink  = document.getElementById('nav-admin-link');
+
+    if (adminLink) adminLink.style.display = 'none';  // hidden by default
 
     if (user && signinLink && signupLink) {
         signinLink.textContent = user.name.split(' ')[0];
-        signinLink.href = 'profile.html';
-        signinLink.title = 'Logged in as ' + user.email;
+        signinLink.href        = 'profile.html';
+        signinLink.title       = `Logged in as ${user.email}`;
 
         signupLink.textContent = 'Logout';
-        signupLink.href = '#';
-        signupLink.className = 'btn btn-outline';
-        signupLink.onclick = (e) => {
+        signupLink.href        = '#';
+        signupLink.className   = 'btn btn-outline';
+        signupLink.onclick     = (e) => {
             e.preventDefault();
-            localStorage.removeItem('forgeUser');
-            showToast('Logged out successfully', 'info');
-            setTimeout(() => window.location.href = 'index.html', 800);
+            logout('Logged out successfully');
         };
 
-        // Show admin link if user is admin
-        if (user.role === 'admin') {
-            const adminLink = document.getElementById('nav-admin-link');
-            if (adminLink) adminLink.style.display = 'inline-flex';
+        if (user.role === 'admin' && adminLink) {
+            adminLink.style.display = 'inline-flex';
         }
     }
 }
 
-// ==========================================
-// CART BADGE (live item count)
-// ==========================================
+// ─── Cart Badge (live count) ───────────────────────────────────────────────
 async function updateCartBadge() {
-    const user = getUser();
+    const user    = getUser();
     const badgeEl = document.getElementById('cart-badge-count');
     if (!badgeEl) return;
 
-    if (!user) {
+    if (!user || isTokenExpired()) {
         badgeEl.style.display = 'none';
         return;
     }
 
     try {
-        const res = await fetch(`${API}/cart/${user._id}`);
-        const cart = await res.json();
+        const res  = await apiFetch(`${API}/cart`, { headers: authHeaders() });
+        const body = await res.json();
+        const cart = body.data || body;
         const count = (cart.items || []).reduce((acc, item) => acc + item.quantity, 0);
+
         if (count > 0) {
-            badgeEl.textContent = count > 99 ? '99+' : count;
+            badgeEl.textContent   = count > 99 ? '99+' : count;
             badgeEl.style.display = 'flex';
         } else {
             badgeEl.style.display = 'none';
@@ -125,14 +178,17 @@ async function updateCartBadge() {
     }
 }
 
-// ==========================================
-// ADD TO CART (shared across pages)
-// ==========================================
+// ─── Add to Cart (shared across pages) ────────────────────────────────────
 async function addToCart(productId) {
     const user = getUser();
     if (!user) {
         showToast('Please sign in to add items to cart', 'warning');
-        setTimeout(() => window.location.href = 'login.html', 1200);
+        setTimeout(() => { window.location.href = 'login.html'; }, 1200);
+        return;
+    }
+
+    if (isTokenExpired()) {
+        logout('Session expired — please sign in again');
         return;
     }
 
@@ -145,24 +201,23 @@ async function addToCart(productId) {
     });
 
     try {
-        const res = await fetch(`${API}/cart/add`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user._id, productId, quantity: 1 })
+        const res  = await apiFetch(`${API}/cart/add`, {
+            method:  'POST',
+            headers: authHeaders(),
+            body:    JSON.stringify({ productId, quantity: 1 })
         });
         const data = await res.json();
 
-        if (res.ok) {
-            showToast('Item deployed to cart!', 'success');
+        if (res.ok && data.success) {
+            showToast('Item added to cart!', 'success');
             updateCartBadge();
 
-            // Show success animation on button
             btns.forEach(btn => {
                 btn.innerHTML = '<i class="fas fa-check"></i>';
                 btn.classList.add('btn-success-flash');
                 setTimeout(() => {
                     btn.innerHTML = btn._originalHTML;
-                    btn.disabled = false;
+                    btn.disabled  = false;
                     btn.classList.remove('btn-success-flash');
                 }, 1500);
             });
@@ -170,22 +225,33 @@ async function addToCart(productId) {
             showToast(data.message || 'Failed to add to cart', 'error');
             btns.forEach(btn => {
                 btn.innerHTML = btn._originalHTML;
-                btn.disabled = false;
+                btn.disabled  = false;
             });
         }
     } catch (err) {
-        console.error('Add to cart error:', err);
-        showToast('Connection error. Is the server running?', 'error');
+        if (err.message !== 'Session expired') {
+            showToast('Connection error. Is the server running?', 'error');
+        }
         btns.forEach(btn => {
-            btn.innerHTML = btn._originalHTML;
-            btn.disabled = false;
+            btn.innerHTML = btn._originalHTML || btn.innerHTML;
+            btn.disabled  = false;
         });
     }
 }
 
-// ==========================================
-// INIT ON PAGE LOAD
-// ==========================================
+// ─── Status Badge Helper (shared) ─────────────────────────────────────────
+function getStatusBadge(status) {
+    const map = {
+        pending:   { label: 'Pending',   className: 'badge-pending',   icon: 'fa-clock' },
+        shipped:   { label: 'Shipped',   className: 'badge-shipped',   icon: 'fa-shipping-fast' },
+        delivered: { label: 'Delivered', className: 'badge-delivered', icon: 'fa-check-circle' },
+        cancelled: { label: 'Cancelled', className: 'badge-cancelled', icon: 'fa-times-circle' }
+    };
+    const s = map[status] || map.pending;
+    return `<span class="order-badge ${s.className}"><i class="fas ${s.icon}"></i> ${s.label}</span>`;
+}
+
+// ─── Init on Page Load ─────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     updateNavAuth();
     updateCartBadge();

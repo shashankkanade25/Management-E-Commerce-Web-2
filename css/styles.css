@@ -1944,3 +1944,177 @@ tr[data-clickable] {
 tr[data-clickable]:hover td {
   background: var(--card-hover);
 }
+
+/* ==========================================
+   PRODUCTION UPGRADE ADDITIONS
+   ========================================== */
+
+/* ── Stock Badges ──────────────────────────────────────────────────────── */
+.stock-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  z-index: 2;
+  backdrop-filter: blur(8px);
+}
+
+.stock-badge.out-of-stock {
+  background: rgba(239, 68, 68, 0.85);
+  color: #fff;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.stock-badge.low-stock {
+  background: rgba(245, 158, 11, 0.85);
+  color: #000;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+/* ── Order Status Badges ───────────────────────────────────────────────── */
+.order-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.badge-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.badge-shipped {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.badge-delivered {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.badge-cancelled {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* ── Field Validation Errors ───────────────────────────────────────────── */
+.field-error {
+  display: none;
+  color: #f87171;
+  font-size: 0.8rem;
+  margin-top: 5px;
+  padding-left: 2px;
+}
+
+.form-control.input-error {
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08) !important;
+}
+
+/* ── Disabled buttons ─────────────────────────────────────────────────── */
+.btn:disabled,
+.btn-add-circle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn-add-circle:disabled:hover {
+  background: var(--primary) !important;
+}
+
+/* ── Small button variant ─────────────────────────────────────────────── */
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 0.8rem;
+}
+
+/* ── Admin section title ──────────────────────────────────────────────── */
+.admin-section-title {
+  font-size: 0.92rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+  font-family: 'Outfit', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Status badge (legacy compat for orders.html) ─────────────────────── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* ── Toast container position ─────────────────────────────────────────── */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+  backdrop-filter: blur(20px);
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 240px;
+  max-width: 360px;
+  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.toast.success { background: rgba(16, 185, 129, 0.18); color: #10b981; border-color: rgba(16,185,129,0.2); }
+.toast.error   { background: rgba(239, 68, 68, 0.18);  color: #f87171; border-color: rgba(239,68,68,0.2); }
+.toast.warning { background: rgba(245, 158, 11, 0.18); color: #f59e0b; border-color: rgba(245,158,11,0.2); }
+.toast.info    { background: rgba(59, 130, 246, 0.18);  color: #60a5fa; border-color: rgba(59,130,246,0.2); }
+
+.toast-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.toast.success .toast-icon { background: rgba(16,185,129,0.2); }
+.toast.error   .toast-icon { background: rgba(239,68,68,0.2); }
+.toast.warning .toast-icon { background: rgba(245,158,11,0.2); }
+.toast.info    .toast-icon { background: rgba(59,130,246,0.2); }

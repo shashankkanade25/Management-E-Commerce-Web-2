@@ -9,13 +9,11 @@
 </head>
 <body>
     <nav class="navbar" id="navbar">
-        <a href="index.html" class="nav-brand">
-            <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
-        </a>
+        <a href="index.html" class="nav-brand"><i class="fas fa-layer-group"></i> <span>ForgeCart</span></a>
         <div class="nav-links">
-            <a href="admin.html" class="nav-link nav-admin-link" id="nav-admin-link" style="margin-right: 15px;" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
-            <a href="orders.html" class="nav-link" style="margin-right: 15px;" title="Order History"><i class="fas fa-box-open"></i></a>
-            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right: 15px;" title="View Cart">
+            <a href="admin.html" class="nav-link nav-admin-link" id="nav-admin-link" style="margin-right:15px;display:none;" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
+            <a href="orders.html" class="nav-link" style="margin-right:15px;" title="Order History"><i class="fas fa-box-open"></i></a>
+            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right:15px;" title="View Cart">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="nav-cart-badge" id="cart-badge-count" style="display:none;">0</span>
             </a>
@@ -28,41 +26,50 @@
         <div class="page-header">
             <h1 class="page-title">Finalize Execution</h1>
         </div>
+        <div id="reservation-banner" style="display:none; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b; padding: 12px; border-radius: 8px; margin-bottom: 25px; text-align: center; font-weight: 600; font-size: 0.95rem; backdrop-filter: blur(10px);">
+            <i class="fas fa-clock" style="margin-right:8px;"></i> Stock reserved for limited time: <span id="reservation-timer" style="font-variant-numeric: tabular-nums;">05:00</span>
+        </div>
         <div class="cart-layout">
-            <div class="glass" style="padding: 40px;">
-                <h3 style="margin-bottom: 25px; color: var(--text-main); font-family: 'Outfit', sans-serif;">Delivery Parameters</h3>
-                <form id="checkout-form">
+            <div class="glass" style="padding:40px;">
+                <h3 style="margin-bottom:25px;color:var(--text-main);font-family:'Outfit',sans-serif;">Delivery Parameters</h3>
+                <form id="checkout-form" novalidate>
                     <div class="form-group">
-                        <label>Target Identity (Full Name)</label>
-                        <input type="text" id="fullname" class="form-control" placeholder="John Doe" required>
+                        <label for="fullname">Target Identity (Full Name)</label>
+                        <input type="text" id="fullname" class="form-control" placeholder="John Doe" required minlength="2">
+                        <span class="field-error" id="err-fullname"></span>
                     </div>
                     <div class="form-group">
-                        <label>Communication Node (Email)</label>
-                        <input type="text" id="email" class="form-control" placeholder="john@example.com" required>
+                        <label for="email">Communication Node (Email)</label>
+                        <input type="email" id="email" class="form-control" placeholder="john@example.com" required>
+                        <span class="field-error" id="err-email"></span>
                     </div>
                     <div class="form-group">
-                        <label>Physical Node (Address)</label>
-                        <textarea id="address" class="form-control" rows="4" placeholder="123 Main St, Appt 4B..." required></textarea>
+                        <label for="address">Physical Node (Address)</label>
+                        <textarea id="address" class="form-control" rows="4" placeholder="123 Main St, Apt 4B..." required minlength="5"></textarea>
+                        <span class="field-error" id="err-address"></span>
                     </div>
-                    
-                    <button type="button" id="place-order-btn" class="btn btn-block" style="padding: 16px; font-size: 1.1rem; margin-top: 30px;">
-                        <i class="fas fa-lock"></i> Authorize & Compile Order
+
+                    <div id="checkout-error" style="color:#ff6b6b;font-size:0.9rem;margin-top:10px;display:none;padding:12px;border-radius:8px;background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.3);"></div>
+
+                    <button type="button" id="place-order-btn" class="btn btn-block" style="padding:16px;font-size:1.1rem;margin-top:30px;" disabled>
+                        <i class="fas fa-lock"></i> Authorize &amp; Compile Order
                     </button>
+                    <p id="order-hint" style="text-align:center;font-size:0.82rem;color:var(--text-muted);margin-top:8px;">Loading cart...</p>
                 </form>
             </div>
-            
+
             <div class="glass cart-summary">
-                <h3 style="margin-bottom: 25px; font-family: 'Outfit', sans-serif;">Payload Summary</h3>
-                <div id="checkout-items-summary" style="margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px dashed var(--card-border);">
+                <h3 style="margin-bottom:25px;font-family:'Outfit',sans-serif;">Payload Summary</h3>
+                <div id="checkout-items-summary" style="margin-bottom:25px;padding-bottom:25px;border-bottom:1px dashed var(--card-border);">
                     <p style="color:var(--text-muted);">Loading...</p>
                 </div>
-                <div class="flex justify-between items-center text-muted mb-2">
-                    <span>Transmission Protocol</span>
-                    <span style="color: var(--success); font-weight: 500;">Free / Instant</span>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <span style="color:var(--text-muted);font-size:0.9rem;">Shipping</span>
+                    <span style="color:var(--success);font-weight:500;">Free</span>
                 </div>
-                <div class="summary-total" style="border-top: none; padding-top: 0; margin-top: 10px;">
+                <div class="summary-total" style="border-top:none;padding-top:0;margin-top:10px;">
                     <span>Total Resource</span>
-                    <span id="checkout-total" style="color: var(--primary);">$0.00</span>
+                    <span id="checkout-total" style="color:var(--primary);">$0.00</span>
                 </div>
             </div>
         </div>
@@ -70,119 +77,221 @@
 
     <footer class="site-footer">
         <div class="footer-content">
-            <div class="footer-brand">
-                <i class="fas fa-layer-group"></i> ForgeCart
-                <span>· BackForge 2026</span>
-            </div>
+            <div class="footer-brand"><i class="fas fa-layer-group"></i> ForgeCart <span>· BackForge 2026</span></div>
             <div class="footer-links">
                 <a href="index.html">Store</a>
                 <a href="cart.html">Cart</a>
                 <a href="orders.html">Orders</a>
                 <a href="login.html">Account</a>
             </div>
-            <div class="footer-copy">
-                Built for the BackForge Hackathon · Designed with precision
-            </div>
+            <div class="footer-copy">Built for the BackForge Hackathon</div>
         </div>
     </footer>
 
     <script src="js/shared.js"></script>
     <script>
-    let cartData = null;
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    let cartData   = null;
 
+    // ── Field error helpers ───────────────────────────────────────────────
+    function setError(id, msg) {
+        const el = document.getElementById('err-' + id);
+        if (el) { el.textContent = msg; el.style.display = msg ? 'block' : 'none'; }
+        const inp = document.getElementById(id);
+        if (inp) inp.classList.toggle('input-error', !!msg);
+    }
+
+    function clearErrors() {
+        ['fullname','email','address'].forEach(f => setError(f, ''));
+        const errBox = document.getElementById('checkout-error');
+        errBox.style.display = 'none';
+        errBox.textContent   = '';
+    }
+
+    // ── Validate form fields ──────────────────────────────────────────────
+    function validateForm() {
+        clearErrors();
+        let valid = true;
+
+        const fullname = document.getElementById('fullname').value.trim();
+        const email    = document.getElementById('email').value.trim();
+        const address  = document.getElementById('address').value.trim();
+
+        if (fullname.length < 2) {
+            setError('fullname', 'Full name is required (min 2 characters)');
+            valid = false;
+        }
+        if (!EMAIL_RE.test(email)) {
+            setError('email', 'Please enter a valid email address');
+            valid = false;
+        }
+        if (address.length < 5) {
+            setError('address', 'Address is required (min 5 characters)');
+            valid = false;
+        }
+        return valid;
+    }
+
+    // ── Real-time validation on blur ──────────────────────────────────────
+    ['fullname','email','address'].forEach(id => {
+        document.getElementById(id).addEventListener('blur', validateForm);
+        document.getElementById(id).addEventListener('input', () => {
+            setError(id, '');
+            document.getElementById(id).classList.remove('input-error');
+        });
+    });
+
+    // ── Load cart and populate checkout summary ────────────────────────────
     async function loadCheckoutSummary() {
         const user = getUser();
         if (!user) { window.location.href = 'login.html'; return; }
 
-        // Pre-fill form with user data
-        document.getElementById('fullname').value = user.name || '';
-        document.getElementById('email').value = user.email || '';
+        document.getElementById('fullname').value = user.name  || '';
+        document.getElementById('email').value    = user.email || '';
+
+        const btn     = document.getElementById('place-order-btn');
+        const hintEl  = document.getElementById('order-hint');
 
         try {
-            const res = await fetch(`${API}/cart/${user._id}`);
-            const cart = await res.json();
-            cartData = cart;
+            const res  = await apiFetch(`${API}/cart`, { headers: authHeaders() });
+            const body = await res.json();
+            cartData   = body.data || body;
 
             const summaryEl = document.getElementById('checkout-items-summary');
-            const totalEl = document.getElementById('checkout-total');
+            const totalEl   = document.getElementById('checkout-total');
 
-            if (!cart.items || cart.items.length === 0) {
+            if (!cartData.items || cartData.items.length === 0) {
                 summaryEl.innerHTML = '<p style="color:var(--text-muted);">Cart is empty. <a href="index.html" style="color:var(--primary);">Go shopping</a></p>';
                 totalEl.textContent = '$0.00';
+                btn.disabled        = true;
+                hintEl.textContent  = 'Your cart is empty';
+                hintEl.style.display = 'block';
                 return;
             }
 
-            summaryEl.innerHTML = cart.items.map(item => `
-                <div class="flex justify-between items-center mb-2" style="font-size: 0.95rem;">
-                    <span class="text-muted"><i class="fas fa-layer-group" style="font-size: 0.8rem; margin-right: 5px; color: var(--primary);"></i> ${item.name} <span style="background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; margin-left: 5px;">x${item.quantity}</span></span>
+            summaryEl.innerHTML = cartData.items.map(item => `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:0.95rem;">
+                    <span style="color:var(--text-muted);">
+                        <i class="fas fa-layer-group" style="font-size:0.8rem;margin-right:5px;color:var(--primary);"></i>
+                        ${item.name}
+                        <span style="background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;font-size:0.8rem;margin-left:5px;">×${item.quantity}</span>
+                    </span>
                     <span>$${(item.price * item.quantity).toFixed(2)}</span>
-                </div>
-            `).join('');
+                </div>`
+            ).join('');
 
-            totalEl.textContent = '$' + cart.total.toFixed(2);
+            totalEl.textContent  = '$' + (cartData.total || 0).toFixed(2);
+            btn.disabled         = false;
+            hintEl.style.display = 'none';
+
+            // ── Verify Reservation & Start Timer ──────────────────────────────
+            try {
+                const resv = await apiFetch(`${API}/reservations/active`, { headers: authHeaders() });
+                const resvData = await resv.json();
+                
+                if (!resvData.success || !resvData.data) {
+                    showToast('No active stock reservation found.', 'warning');
+                    setTimeout(() => window.location.href = 'cart.html', 1500);
+                    return;
+                }
+
+                const expiresAt = new Date(resvData.data.expiresAt).getTime();
+                const timerEl   = document.getElementById('reservation-timer');
+                const bannerEl  = document.getElementById('reservation-banner');
+                bannerEl.style.display = 'block';
+
+                function updateTimer() {
+                    const now = new Date().getTime();
+                    const dist = expiresAt - now;
+
+                    if (dist <= 0) {
+                        timerEl.textContent = "00:00";
+                        bannerEl.style.color = '#f87171';
+                        bannerEl.style.background = 'rgba(239, 68, 68, 0.15)';
+                        bannerEl.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                        
+                        const errorBox = document.getElementById('checkout-error');
+                        errorBox.textContent = 'Stock reservation expired. Please return to your cart to lock stock again.';
+                        errorBox.style.display = 'block';
+                        btn.disabled = true;
+                        
+                        setTimeout(() => window.location.href = 'cart.html', 3000);
+                        return;
+                    }
+
+                    const mins = Math.floor((dist % (1000 * 60 * 60)) / (1000 * 60));
+                    const secs = Math.floor((dist % (1000 * 60)) / 1000);
+                    timerEl.textContent = (mins < 10 ? "0" + mins : mins) + ":" + (secs < 10 ? "0" + secs : secs);
+                    
+                    setTimeout(updateTimer, 1000);
+                }
+                updateTimer();
+            } catch (err) {
+                console.error('Reservation check failed', err);
+            }
+
         } catch (err) {
-            console.error('Failed to load checkout summary:', err);
-            showToast('Failed to load checkout data', 'error');
+            if (err.message !== 'Session expired') {
+                showToast('Failed to load checkout data', 'error');
+            }
         }
     }
 
+    // ── Place order ───────────────────────────────────────────────────────
     document.getElementById('place-order-btn').addEventListener('click', async function() {
         const user = getUser();
         if (!user) { window.location.href = 'login.html'; return; }
-
-        const fullname = document.getElementById('fullname').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const address = document.getElementById('address').value.trim();
-
-        if (!fullname || !email || !address) {
-            showToast('Please fill in all delivery parameters', 'warning');
-            return;
-        }
 
         if (!cartData || !cartData.items || cartData.items.length === 0) {
             showToast('Your cart is empty!', 'warning');
             return;
         }
 
-        const btn = this;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        if (!validateForm()) return;
+
+        const fullname = document.getElementById('fullname').value.trim();
+        const email    = document.getElementById('email').value.trim();
+        const address  = document.getElementById('address').value.trim();
+
+        const btn       = this;
+        btn.disabled    = true;
+        btn.innerHTML   = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        const errorBox  = document.getElementById('checkout-error');
+        errorBox.style.display = 'none';
 
         try {
-            // Step 1: Initialize mock payment
-            const payRes = await fetch(`${API}/payment/initialize`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount: cartData.total, currency: 'USD' })
-            });
-            const paymentData = await payRes.json();
+            // Build items array (backend recalculates prices from DB)
+            const items = cartData.items.map(item => ({
+                productId: item.productId,
+                quantity:  item.quantity
+            }));
 
-            // Step 2: Create order
-            const orderRes = await fetch(`${API}/orders/create`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: user._id,
-                    items: cartData.items,
-                    total: cartData.total,
-                    paymentStatus: 'completed'
+            const res = await apiFetch(`${API}/orders/create`, {
+                method:  'POST',
+                headers: authHeaders(),
+                body:    JSON.stringify({
+                    items,
+                    shippingAddress: { fullName: fullname, email, address }
                 })
             });
-            const order = await orderRes.json();
+            const data = await res.json();
 
-            if (orderRes.ok) {
-                showToast(`Order compiled! TXN: ${paymentData.transactionId}`, 'success');
-                setTimeout(() => window.location.href = 'orders.html', 1500);
+            if (res.ok && data.success) {
+                showToast(`Order ${data.data.orderId} placed successfully!`, 'success');
+                setTimeout(() => { window.location.href = 'orders.html'; }, 1500);
             } else {
-                showToast(order.message || 'Order failed', 'error');
+                errorBox.textContent   = data.message || 'Order failed. Please try again.';
+                errorBox.style.display = 'block';
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-lock"></i> Authorize & Compile Order';
+                btn.innerHTML = '<i class="fas fa-lock"></i> Authorize &amp; Compile Order';
             }
         } catch (err) {
-            console.error('Checkout failed:', err);
-            showToast('Checkout failed. Please try again.', 'error');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-lock"></i> Authorize & Compile Order';
+            if (err.message !== 'Session expired') {
+                errorBox.textContent   = 'Checkout failed. Please try again.';
+                errorBox.style.display = 'block';
+                btn.disabled    = false;
+                btn.innerHTML   = '<i class="fas fa-lock"></i> Authorize &amp; Compile Order';
+            }
         }
     });
 

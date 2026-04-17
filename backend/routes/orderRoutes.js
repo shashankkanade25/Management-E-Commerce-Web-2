@@ -1,17 +1,21 @@
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
 const {
     createOrder,
-    getUserOrders,
+    getMyOrders,
+    getOrderById,
     updateOrderStatus
 } = require('../controllers/orderController');
-const { protect } = require('../middlewares/authMiddleware');
+const { verifyToken, isAdmin }         = require('../middlewares/authMiddleware');
+const { validateOrder, validateStatusUpdate } = require('../middlewares/validate');
+const { orderLimiter }                 = require('../middlewares/rateLimiter');
 
-// For simplicity, create and view by userId
-router.post('/create', createOrder);
-router.get('/:userId', getUserOrders);
+// All order routes require authentication
+router.post('/create', verifyToken, orderLimiter, validateOrder, createOrder);
+router.get('/my',      verifyToken, getMyOrders);
+router.get('/:id',     verifyToken, getOrderById);
 
-// Admin route
-router.patch('/:id/status', protect, updateOrderStatus);
+// Admin-only: update order status
+router.put('/:id/status', verifyToken, isAdmin, validateStatusUpdate, updateOrderStatus);
 
 module.exports = router;

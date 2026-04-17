@@ -1,16 +1,19 @@
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
 const {
     getCart,
     addToCart,
     updateCart,
-    removeFromCart
+    removeFromCart,
+    clearCart
 } = require('../controllers/cartController');
+const { verifyToken } = require('../middlewares/authMiddleware');
 
-// Using basic userId mapped routes for simplicity in the hackathon without demanding auth token on every cart click
-router.get('/:userId', getCart);
-router.post('/add', addToCart);
-router.patch('/update', updateCart);
-router.delete('/remove/:userId/:productId', removeFromCart);
+// All cart routes require authentication
+router.get('/',                        verifyToken, getCart);
+router.post('/add',                    verifyToken, addToCart);
+router.patch('/update',                verifyToken, updateCart);
+router.delete('/clear',                verifyToken, clearCart);
+router.delete('/remove/:productId',    verifyToken, removeFromCart);
 
 module.exports = router;

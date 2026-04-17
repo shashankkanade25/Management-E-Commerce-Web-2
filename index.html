@@ -14,9 +14,9 @@
             <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
         </a>
         <div class="nav-links" id="auth-links">
-            <a href="admin.html" class="nav-link nav-admin-link" id="nav-admin-link" style="margin-right: 15px;" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
-            <a href="orders.html" class="nav-link" style="margin-right: 15px;" title="Order History"><i class="fas fa-box-open"></i></a>
-            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right: 15px;" title="View Cart">
+            <a href="admin.html" class="nav-link nav-admin-link" id="nav-admin-link" style="margin-right:15px;display:none;" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
+            <a href="orders.html" class="nav-link" style="margin-right:15px;" title="Order History"><i class="fas fa-box-open"></i></a>
+            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right:15px;" title="View Cart">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="nav-cart-badge" id="cart-badge-count" style="display:none;">0</span>
             </a>
@@ -28,13 +28,13 @@
     <div class="container">
         <div class="hero">
             <h1>Equip for the <br><span>Ultimate Build</span></h1>
-            <p>Exclusive merchandise and digital assets for the BackForge Hackathon. Elevate your developer experience with premium gear designed for extended coding sessions.</p>
+            <p>Exclusive merchandise and digital assets for the BackForge Hackathon.</p>
         </div>
 
         <div class="filter-bar glass">
             <div class="search-wrapper">
                 <i class="fas fa-search"></i>
-                <input type="text" id="search-input" class="form-control search-input" placeholder="Search premium gear, digital assets...">
+                <input type="text" id="search-input" class="form-control search-input" placeholder="Search products, SKU...">
             </div>
             <select id="category-filter" class="form-control category-select">
                 <option value="all">All Categories</option>
@@ -45,88 +45,143 @@
         </div>
 
         <div id="product-grid" class="product-grid">
-            <!-- Products loaded dynamically -->
+            <p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:40px 0;">
+                <i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>Loading products...
+            </p>
         </div>
+
+        <!-- Pagination -->
+        <div id="pagination-bar" style="display:none;text-align:center;margin:32px 0;display:flex;justify-content:center;gap:12px;align-items:center;"></div>
     </div>
 
     <footer class="site-footer">
         <div class="footer-content">
-            <div class="footer-brand">
-                <i class="fas fa-layer-group"></i> ForgeCart
-                <span>· BackForge 2026</span>
-            </div>
+            <div class="footer-brand"><i class="fas fa-layer-group"></i> ForgeCart <span>· BackForge 2026</span></div>
             <div class="footer-links">
                 <a href="index.html">Store</a>
                 <a href="cart.html">Cart</a>
                 <a href="orders.html">Orders</a>
                 <a href="login.html">Account</a>
             </div>
-            <div class="footer-copy">
-                Built for the BackForge Hackathon · Designed with precision
-            </div>
+            <div class="footer-copy">Built for the BackForge Hackathon · Designed with precision</div>
         </div>
     </footer>
 
     <script src="js/shared.js"></script>
     <script>
-    // --- Render products ---
+    let currentPage = 1;
+    let currentSearch = '';
+    let currentCategory = '';
+
+    // ── Render product grid ────────────────────────────────────────────────
     function renderProducts(products) {
         const grid = document.getElementById('product-grid');
         if (!products || products.length === 0) {
-            grid.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1; padding:40px 0;">No products found.</p>';
+            grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:40px 0;">No products found.</p>';
             return;
         }
-        grid.innerHTML = products.map(p => `
+
+        grid.innerHTML = products.map(p => {
+            const outOfStock  = p.stock === 0;
+            const lowStock    = !outOfStock && p.stock < 5;
+            const btnDisabled = outOfStock ? 'disabled' : '';
+            const stockBadge  = outOfStock
+                ? '<span class="stock-badge out-of-stock"><i class="fas fa-ban"></i> Out of Stock</span>'
+                : lowStock
+                    ? `<span class="stock-badge low-stock"><i class="fas fa-exclamation-triangle"></i> Low Stock (${p.stock})</span>`
+                    : '';
+
+            return `
             <div class="glass product-card">
-                <a href="product.html?id=${p._id}" style="text-decoration: none;">
+                <a href="product.html?id=${p._id}" style="text-decoration:none;">
                     <div class="product-img-wrapper">
                         <img src="${p.image}" alt="${p.name}" class="product-img">
+                        ${stockBadge}
                     </div>
                 </a>
-                <div class="product-category"><i class="fas fa-tag" style="font-size:0.7rem; margin-right:4px;"></i> ${p.category}</div>
-                <a href="product.html?id=${p._id}" style="text-decoration: none;">
+                <div class="product-category"><i class="fas fa-tag" style="font-size:0.7rem;margin-right:4px;"></i>${p.category}</div>
+                <a href="product.html?id=${p._id}" style="text-decoration:none;">
                     <h3 class="product-title">${p.name}</h3>
                 </a>
+                <div style="font-size:0.72rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-bottom:6px;">SKU: ${p.sku || 'N/A'}</div>
                 <div class="product-footer">
                     <div class="product-price">$${p.price.toFixed(2)}</div>
-                    <button class="btn-add-circle" title="Deploy to Cart" onclick="addToCart('${p._id}')">
-                        <i class="fas fa-plus"></i>
+                    <button class="btn-add-circle" title="${outOfStock ? 'Out of stock' : 'Add to Cart'}"
+                        onclick="addToCart('${p._id}')" ${btnDisabled}>
+                        <i class="fas ${outOfStock ? 'fa-ban' : 'fa-plus'}"></i>
                     </button>
                 </div>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
     }
 
-    // --- Fetch products from API ---
-    async function fetchProducts(search = '', category = '') {
+    // ── Render pagination ──────────────────────────────────────────────────
+    function renderPagination(pagination) {
+        const bar = document.getElementById('pagination-bar');
+        if (!pagination || pagination.totalPages <= 1) {
+            bar.style.display = 'none';
+            return;
+        }
+
+        bar.style.display = 'flex';
+        let html = '';
+
+        if (pagination.hasPrev) {
+            html += `<button class="btn btn-outline" onclick="fetchProducts(${pagination.page - 1})">
+                <i class="fas fa-chevron-left"></i> Prev</button>`;
+        }
+
+        html += `<span style="color:var(--text-muted);font-size:0.9rem;">
+            Page ${pagination.page} of ${pagination.totalPages}</span>`;
+
+        if (pagination.hasNext) {
+            html += `<button class="btn btn-outline" onclick="fetchProducts(${pagination.page + 1})">
+                Next <i class="fas fa-chevron-right"></i></button>`;
+        }
+
+        bar.innerHTML = html;
+    }
+
+    // ── Fetch and render ───────────────────────────────────────────────────
+    async function fetchProducts(page = 1) {
+        currentPage = page;
+        const grid = document.getElementById('product-grid');
+        grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:40px 0;"><i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>Loading...</p>';
+
         try {
-            const params = new URLSearchParams();
-            if (search) params.append('search', search);
-            if (category && category !== 'all') params.append('category', category);
-            const res = await fetch(`${API}/products?${params.toString()}`);
-            const data = await res.json();
-            renderProducts(data.products);
+            const params = new URLSearchParams({ page, limit: 12 });
+            if (currentSearch) params.append('search', currentSearch);
+            if (currentCategory && currentCategory !== 'all') params.append('category', currentCategory);
+
+            const res  = await fetch(`${API}/products?${params.toString()}`);
+            const body = await res.json();
+
+            if (body.success) {
+                renderProducts(body.data.products);
+                renderPagination(body.data.pagination);
+            } else {
+                grid.innerHTML = '<p style="color:#ff6b6b;text-align:center;grid-column:1/-1;padding:40px 0;">Failed to load products.</p>';
+            }
         } catch (err) {
             console.error('Failed to load products:', err);
+            grid.innerHTML = '<p style="color:#ff6b6b;text-align:center;grid-column:1/-1;padding:40px 0;">Server error — is the backend running?</p>';
         }
     }
 
-    // --- Search with debounce ---
+    // ── Search with debounce ───────────────────────────────────────────────
     let searchTimeout;
     document.getElementById('search-input').addEventListener('input', function() {
         clearTimeout(searchTimeout);
-        const search = this.value;
-        const category = document.getElementById('category-filter').value;
-        searchTimeout = setTimeout(() => fetchProducts(search, category), 300);
+        currentSearch = this.value.trim();
+        searchTimeout = setTimeout(() => fetchProducts(1), 300);
     });
 
-    // --- Category filter ---
     document.getElementById('category-filter').addEventListener('change', function() {
-        const search = document.getElementById('search-input').value;
-        fetchProducts(search, this.value);
+        currentCategory = this.value;
+        fetchProducts(1);
     });
 
-    // --- Init ---
+    // ── Init ───────────────────────────────────────────────────────────────
     fetchProducts();
     </script>
 </body>

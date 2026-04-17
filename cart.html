@@ -9,13 +9,11 @@
 </head>
 <body>
     <nav class="navbar" id="navbar">
-        <a href="index.html" class="nav-brand">
-            <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
-        </a>
+        <a href="index.html" class="nav-brand"><i class="fas fa-layer-group"></i> <span>ForgeCart</span></a>
         <div class="nav-links">
-            <a href="admin.html" class="nav-link nav-admin-link" id="nav-admin-link" style="margin-right: 15px;" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
-            <a href="orders.html" class="nav-link" style="margin-right: 15px;" title="Order History"><i class="fas fa-box-open"></i></a>
-            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right: 15px;" title="View Cart">
+            <a href="admin.html" class="nav-link nav-admin-link" id="nav-admin-link" style="margin-right:15px;display:none;" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
+            <a href="orders.html" class="nav-link" style="margin-right:15px;" title="Order History"><i class="fas fa-box-open"></i></a>
+            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right:15px;" title="View Cart">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="nav-cart-badge" id="cart-badge-count" style="display:none;">0</span>
             </a>
@@ -30,19 +28,24 @@
         </div>
         <div class="cart-layout">
             <div id="cart-items-list" class="cart-items">
-                <p style="color:var(--text-muted); text-align:center; padding:30px 0;">Loading cart...</p>
+                <p style="color:var(--text-muted);text-align:center;padding:30px 0;">
+                    <i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>Loading cart...
+                </p>
             </div>
-            
+
             <div class="glass cart-summary">
-                <h3 style="margin-bottom: 25px; font-family: 'Outfit', sans-serif;">System Status</h3>
+                <h3 style="margin-bottom:25px;font-family:'Outfit',sans-serif;">System Status</h3>
                 <div class="summary-total">
                     <span>Subtotal</span>
-                    <span id="summary-total-amt" style="color: var(--primary);">$0.00</span>
+                    <span id="summary-total-amt" style="color:var(--primary);">$0.00</span>
                 </div>
-                <button class="btn btn-block" style="padding: 16px; font-size: 1.1rem; margin-top: 10px;" id="checkout-btn">
-                    Proceed to Checkout <i class="fas fa-arrow-right" style="margin-left: 5px;"></i>
+                <button class="btn btn-block" style="padding:16px;font-size:1.1rem;margin-top:10px;" id="checkout-btn" disabled>
+                    Proceed to Checkout <i class="fas fa-arrow-right" style="margin-left:5px;"></i>
                 </button>
-                <div style="margin-top:25px; font-size: 0.85rem; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <p id="checkout-hint" style="text-align:center;font-size:0.82rem;color:var(--text-muted);margin-top:8px;">
+                    Add items to enable checkout
+                </p>
+                <div style="margin-top:25px;font-size:0.85rem;color:var(--text-muted);text-align:center;display:flex;align-items:center;justify-content:center;gap:8px;">
                     <i class="fas fa-shield-alt"></i> Encrypted Transaction via ForgeCart
                 </div>
             </div>
@@ -51,19 +54,14 @@
 
     <footer class="site-footer">
         <div class="footer-content">
-            <div class="footer-brand">
-                <i class="fas fa-layer-group"></i> ForgeCart
-                <span>· BackForge 2026</span>
-            </div>
+            <div class="footer-brand"><i class="fas fa-layer-group"></i> ForgeCart <span>· BackForge 2026</span></div>
             <div class="footer-links">
                 <a href="index.html">Store</a>
                 <a href="cart.html">Cart</a>
                 <a href="orders.html">Orders</a>
                 <a href="login.html">Account</a>
             </div>
-            <div class="footer-copy">
-                Built for the BackForge Hackathon · Designed with precision
-            </div>
+            <div class="footer-copy">Built for the BackForge Hackathon · Designed with precision</div>
         </div>
     </footer>
 
@@ -71,113 +69,173 @@
     <script>
     let currentCart = null;
 
+    // ── Render the cart ────────────────────────────────────────────────────
     function renderCart(cart) {
         currentCart = cart;
-        const list = document.getElementById('cart-items-list');
-        const totalEl = document.getElementById('summary-total-amt');
+        const list      = document.getElementById('cart-items-list');
+        const totalEl   = document.getElementById('summary-total-amt');
+        const checkBtn  = document.getElementById('checkout-btn');
+        const hintEl    = document.getElementById('checkout-hint');
 
         if (!cart || !cart.items || cart.items.length === 0) {
             list.innerHTML = `
-                <div style="text-align:center; padding:60px 0; color:var(--text-muted);">
-                    <i class="fas fa-shopping-cart" style="font-size:3rem; margin-bottom:15px; opacity:0.3;"></i>
+                <div style="text-align:center;padding:60px 0;color:var(--text-muted);">
+                    <i class="fas fa-shopping-cart" style="font-size:3rem;margin-bottom:15px;opacity:0.3;"></i>
                     <p>Your payload bay is empty.</p>
-                    <a href="index.html" class="btn" style="margin-top:20px; display:inline-block;">Browse Store</a>
+                    <a href="index.html" class="btn" style="margin-top:20px;display:inline-block;">Browse Store</a>
                 </div>`;
-            totalEl.textContent = '$0.00';
+            totalEl.textContent  = '$0.00';
+            checkBtn.disabled    = true;
+            hintEl.style.display = 'block';
             updateCartBadge();
             return;
         }
 
-        list.innerHTML = cart.items.map(item => `
+        // Check if any item has stock issues (product may have changed)
+        list.innerHTML = cart.items.map(item => {
+            const stockDisplay = item.stock !== undefined && item.stock < 5
+                ? `<span class="stock-badge low-stock" style="font-size:0.7rem;padding:2px 6px;margin-left:6px;">Low Stock</span>`
+                : '';
+            return `
             <div class="glass cart-item">
                 <img src="${item.image}" alt="${item.name}" class="cart-item-img">
                 <div class="cart-item-info">
-                    <div class="cart-item-title">${item.name}</div>
+                    <div class="cart-item-title">${item.name} ${stockDisplay}</div>
                     <div class="cart-item-price">$${item.price.toFixed(2)}</div>
                 </div>
                 <div class="cart-qty-ctrl">
-                    <button class="qty-btn" onclick="updateQty('${item.productId}', ${item.quantity - 1})"><i class="fas fa-minus"></i></button>
+                    <button class="qty-btn" id="minus-${item.productId}"
+                        onclick="updateQty('${item.productId}', ${item.quantity - 1})">
+                        <i class="fas fa-minus"></i>
+                    </button>
                     <span class="qty-val">${item.quantity}</span>
-                    <button class="qty-btn" onclick="updateQty('${item.productId}', ${item.quantity + 1})"><i class="fas fa-plus"></i></button>
+                    <button class="qty-btn" id="plus-${item.productId}"
+                        onclick="updateQty('${item.productId}', ${item.quantity + 1})">
+                        <i class="fas fa-plus"></i>
+                    </button>
                 </div>
                 <div class="cart-item-total">$${(item.price * item.quantity).toFixed(2)}</div>
                 <button class="icon-btn" onclick="removeItem('${item.productId}')">
                     <i class="fas fa-trash"></i>
                 </button>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
 
-        totalEl.textContent = '$' + cart.total.toFixed(2);
+        totalEl.textContent  = '$' + (cart.total || 0).toFixed(2);
+        checkBtn.disabled    = false;
+        hintEl.style.display = 'none';
         updateCartBadge();
     }
 
+    // ── Load cart from API ─────────────────────────────────────────────────
     async function loadCart() {
         const user = getUser();
         if (!user) {
             document.getElementById('cart-items-list').innerHTML = `
-                <div style="text-align:center; padding:60px 0; color:var(--text-muted);">
-                    <i class="fas fa-lock" style="font-size:3rem; margin-bottom:15px; opacity:0.3;"></i>
+                <div style="text-align:center;padding:60px 0;color:var(--text-muted);">
+                    <i class="fas fa-lock" style="font-size:3rem;margin-bottom:15px;opacity:0.3;"></i>
                     <p>Please sign in to view your cart.</p>
-                    <a href="login.html" class="btn" style="margin-top:20px; display:inline-block;">Sign In</a>
+                    <a href="login.html" class="btn" style="margin-top:20px;display:inline-block;">Sign In</a>
                 </div>`;
+            document.getElementById('checkout-btn').disabled = true;
             return;
         }
         try {
-            const res = await fetch(`${API}/cart/${user._id}`);
-            const cart = await res.json();
-            renderCart(cart);
+            const res  = await apiFetch(`${API}/cart`, { headers: authHeaders() });
+            const body = await res.json();
+            renderCart(body.data || body);
         } catch (err) {
-            console.error('Failed to load cart:', err);
-            showToast('Failed to load cart. Is the server running?', 'error');
+            if (err.message !== 'Session expired') {
+                showToast('Failed to load cart. Is the server running?', 'error');
+            }
         }
     }
 
+    // ── Update quantity ────────────────────────────────────────────────────
     async function updateQty(productId, newQty) {
         const user = getUser();
         if (!user) return;
         if (newQty < 1) { removeItem(productId); return; }
+
         try {
-            const res = await fetch(`${API}/cart/update`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user._id, productId, quantity: newQty })
+            const res  = await apiFetch(`${API}/cart/update`, {
+                method:  'PATCH',
+                headers: authHeaders(),
+                body:    JSON.stringify({ productId, quantity: newQty })
             });
-            const cart = await res.json();
-            renderCart(cart);
-            showToast('Quantity updated', 'info');
+            const body = await res.json();
+            if (res.ok && body.success) {
+                renderCart(body.data);
+            } else {
+                showToast(body.message || 'Failed to update quantity', 'error');
+            }
         } catch (err) {
-            console.error(err);
-            showToast('Failed to update quantity', 'error');
+            if (err.message !== 'Session expired') showToast('Failed to update quantity', 'error');
         }
     }
 
+    // ── Remove item ────────────────────────────────────────────────────────
     async function removeItem(productId) {
         const user = getUser();
         if (!user) return;
         try {
-            const res = await fetch(`${API}/cart/remove/${user._id}/${productId}`, { method: 'DELETE' });
-            const cart = await res.json();
-            renderCart(cart);
-            showToast('Item removed from cart', 'info');
+            const res  = await apiFetch(`${API}/cart/remove/${productId}`, {
+                method:  'DELETE',
+                headers: authHeaders()
+            });
+            const body = await res.json();
+            if (res.ok && body.success) {
+                renderCart(body.data);
+                showToast('Item removed from cart', 'info');
+            } else {
+                showToast(body.message || 'Failed to remove item', 'error');
+            }
         } catch (err) {
-            console.error(err);
-            showToast('Failed to remove item', 'error');
+            if (err.message !== 'Session expired') showToast('Failed to remove item', 'error');
         }
     }
 
-    // Checkout button -> go to checkout page
-    document.getElementById('checkout-btn').addEventListener('click', function() {
+    // ── Checkout button (API Reserve) ──────────────────────────────────────
+    document.getElementById('checkout-btn').addEventListener('click', async function() {
         const user = getUser();
         if (!user) {
             showToast('Please sign in first', 'warning');
-            setTimeout(() => window.location.href = 'login.html', 1000);
+            setTimeout(() => { window.location.href = 'login.html'; }, 1000);
             return;
         }
         if (!currentCart || !currentCart.items || currentCart.items.length === 0) {
             showToast('Your cart is empty!', 'warning');
             return;
         }
-        window.location.href = 'checkout.html';
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Reserving Stock...';
+
+        try {
+            const res = await apiFetch(`${API}/reservations/reserve`, {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                showToast('Stock reserved! Redirecting...', 'success');
+                setTimeout(() => { window.location.href = 'checkout.html'; }, 1000);
+            } else {
+                showToast(data.message || 'Failed to reserve stock', 'error');
+                btn.disabled = false;
+                btn.innerHTML = 'Proceed to Checkout <i class="fas fa-arrow-right" style="margin-left:5px;"></i>';
+                // Reload cart to show any potential out-of-stock items
+                loadCart();
+            }
+        } catch (err) {
+            if (err.message !== 'Session expired') {
+                showToast('Failed to contact server', 'error');
+                btn.disabled = false;
+                btn.innerHTML = 'Proceed to Checkout <i class="fas fa-arrow-right" style="margin-left:5px;"></i>';
+            }
+        }
     });
 
     loadCart();
