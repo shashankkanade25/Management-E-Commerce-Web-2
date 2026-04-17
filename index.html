@@ -14,10 +14,14 @@
             <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
         </a>
         <div class="nav-links" id="auth-links">
+            <a href="admin.html" class="nav-link nav-admin-link" id="nav-admin-link" style="margin-right: 15px;" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
             <a href="orders.html" class="nav-link" style="margin-right: 15px;" title="Order History"><i class="fas fa-box-open"></i></a>
-            <a href="cart.html" class="nav-link" style="margin-right: 15px;" title="View Cart"><i class="fas fa-shopping-cart"></i></a>
-            <a href="login.html" class="nav-link">Sign In</a>
-            <a href="register.html" class="btn">Sign Up</a>
+            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right: 15px;" title="View Cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="nav-cart-badge" id="cart-badge-count" style="display:none;">0</span>
+            </a>
+            <a href="login.html" class="nav-link" id="nav-signin">Sign In</a>
+            <a href="register.html" class="btn" id="nav-signup">Sign Up</a>
         </div>
     </nav>
 
@@ -41,81 +45,7 @@
         </div>
 
         <div id="product-grid" class="product-grid">
-            <!-- Static Product 1 -->
-            <div class="glass product-card">
-                <a href="product.html" style="text-decoration: none;">
-                    <div class="product-img-wrapper">
-                        <img src="assets/images/hoodie.png" alt="Hackathon Hoodie 2026" class="product-img">
-                    </div>
-                </a>
-                <div class="product-category"><i class="fas fa-tag" style="font-size:0.7rem; margin-right:4px;"></i> clothing</div>
-                <a href="product.html" style="text-decoration: none;">
-                    <h3 class="product-title">Hackathon Hoodie 2026</h3>
-                </a>
-                <div class="product-footer">
-                    <div class="product-price">$59.99</div>
-                    <button class="btn-add-circle" title="Deploy to Cart">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Static Product 2 -->
-            <div class="glass product-card">
-                <a href="product.html" style="text-decoration: none;">
-                    <div class="product-img-wrapper">
-                        <img src="assets/images/tshirt.png" alt="Code Powered T-Shirt" class="product-img">
-                    </div>
-                </a>
-                <div class="product-category"><i class="fas fa-tag" style="font-size:0.7rem; margin-right:4px;"></i> clothing</div>
-                <a href="product.html" style="text-decoration: none;">
-                    <h3 class="product-title">Code Powered T-Shirt</h3>
-                </a>
-                <div class="product-footer">
-                    <div class="product-price">$29.99</div>
-                    <button class="btn-add-circle" title="Deploy to Cart">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Static Product 3 -->
-            <div class="glass product-card">
-                <a href="product.html" style="text-decoration: none;">
-                    <div class="product-img-wrapper">
-                        <img src="assets/images/backpack.png" alt="Premium Dev Backpack" class="product-img">
-                    </div>
-                </a>
-                <div class="product-category"><i class="fas fa-tag" style="font-size:0.7rem; margin-right:4px;"></i> accessories</div>
-                <a href="product.html" style="text-decoration: none;">
-                    <h3 class="product-title">Premium Dev Backpack</h3>
-                </a>
-                <div class="product-footer">
-                    <div class="product-price">$89.99</div>
-                    <button class="btn-add-circle" title="Deploy to Cart">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Static Product 4 -->
-            <div class="glass product-card">
-                <a href="product.html" style="text-decoration: none;">
-                    <div class="product-img-wrapper">
-                        <img src="assets/images/api_token.png" alt="API Access Token (1Yr)" class="product-img">
-                    </div>
-                </a>
-                <div class="product-category"><i class="fas fa-tag" style="font-size:0.7rem; margin-right:4px;"></i> digital</div>
-                <a href="product.html" style="text-decoration: none;">
-                    <h3 class="product-title">API Access Token (1Yr)</h3>
-                </a>
-                <div class="product-footer">
-                    <div class="product-price">$149.99</div>
-                    <button class="btn-add-circle" title="Deploy to Cart">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            </div>
+            <!-- Products loaded dynamically -->
         </div>
     </div>
 
@@ -136,5 +66,68 @@
             </div>
         </div>
     </footer>
+
+    <script src="js/shared.js"></script>
+    <script>
+    // --- Render products ---
+    function renderProducts(products) {
+        const grid = document.getElementById('product-grid');
+        if (!products || products.length === 0) {
+            grid.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1; padding:40px 0;">No products found.</p>';
+            return;
+        }
+        grid.innerHTML = products.map(p => `
+            <div class="glass product-card">
+                <a href="product.html?id=${p._id}" style="text-decoration: none;">
+                    <div class="product-img-wrapper">
+                        <img src="${p.image}" alt="${p.name}" class="product-img">
+                    </div>
+                </a>
+                <div class="product-category"><i class="fas fa-tag" style="font-size:0.7rem; margin-right:4px;"></i> ${p.category}</div>
+                <a href="product.html?id=${p._id}" style="text-decoration: none;">
+                    <h3 class="product-title">${p.name}</h3>
+                </a>
+                <div class="product-footer">
+                    <div class="product-price">$${p.price.toFixed(2)}</div>
+                    <button class="btn-add-circle" title="Deploy to Cart" onclick="addToCart('${p._id}')">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // --- Fetch products from API ---
+    async function fetchProducts(search = '', category = '') {
+        try {
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (category && category !== 'all') params.append('category', category);
+            const res = await fetch(`${API}/products?${params.toString()}`);
+            const data = await res.json();
+            renderProducts(data.products);
+        } catch (err) {
+            console.error('Failed to load products:', err);
+        }
+    }
+
+    // --- Search with debounce ---
+    let searchTimeout;
+    document.getElementById('search-input').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const search = this.value;
+        const category = document.getElementById('category-filter').value;
+        searchTimeout = setTimeout(() => fetchProducts(search, category), 300);
+    });
+
+    // --- Category filter ---
+    document.getElementById('category-filter').addEventListener('change', function() {
+        const search = document.getElementById('search-input').value;
+        fetchProducts(search, this.value);
+    });
+
+    // --- Init ---
+    fetchProducts();
+    </script>
 </body>
 </html>

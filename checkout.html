@@ -13,10 +13,14 @@
             <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
         </a>
         <div class="nav-links">
+            <a href="admin.html" class="nav-link nav-admin-link" id="nav-admin-link" style="margin-right: 15px;" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
             <a href="orders.html" class="nav-link" style="margin-right: 15px;" title="Order History"><i class="fas fa-box-open"></i></a>
-            <a href="cart.html" class="nav-link" style="margin-right: 15px;" title="View Cart"><i class="fas fa-shopping-cart"></i></a>
-            <a href="login.html" class="nav-link">Sign In</a>
-            <a href="register.html" class="btn">Sign Up</a>
+            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right: 15px;" title="View Cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="nav-cart-badge" id="cart-badge-count" style="display:none;">0</span>
+            </a>
+            <a href="login.html" class="nav-link" id="nav-signin">Sign In</a>
+            <a href="register.html" class="btn" id="nav-signup">Sign Up</a>
         </div>
     </nav>
 
@@ -30,18 +34,18 @@
                 <form id="checkout-form">
                     <div class="form-group">
                         <label>Target Identity (Full Name)</label>
-                        <input type="text" id="fullname" class="form-control" placeholder="John Doe">
+                        <input type="text" id="fullname" class="form-control" placeholder="John Doe" required>
                     </div>
                     <div class="form-group">
                         <label>Communication Node (Email)</label>
-                        <input type="text" id="email" class="form-control" placeholder="john@example.com">
+                        <input type="text" id="email" class="form-control" placeholder="john@example.com" required>
                     </div>
                     <div class="form-group">
                         <label>Physical Node (Address)</label>
-                        <textarea id="address" class="form-control" rows="4" placeholder="123 Main St, Appt 4B..."></textarea>
+                        <textarea id="address" class="form-control" rows="4" placeholder="123 Main St, Appt 4B..." required></textarea>
                     </div>
                     
-                    <button type="button" class="btn btn-block" style="padding: 16px; font-size: 1.1rem; margin-top: 30px;">
+                    <button type="button" id="place-order-btn" class="btn btn-block" style="padding: 16px; font-size: 1.1rem; margin-top: 30px;">
                         <i class="fas fa-lock"></i> Authorize & Compile Order
                     </button>
                 </form>
@@ -50,14 +54,7 @@
             <div class="glass cart-summary">
                 <h3 style="margin-bottom: 25px; font-family: 'Outfit', sans-serif;">Payload Summary</h3>
                 <div id="checkout-items-summary" style="margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px dashed var(--card-border);">
-                    <div class="flex justify-between items-center mb-2" style="font-size: 0.95rem;">
-                        <span class="text-muted"><i class="fas fa-layer-group" style="font-size: 0.8rem; margin-right: 5px; color: var(--primary);"></i> Hackathon Hoodie 2026 <span style="background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; margin-left: 5px;">x1</span></span>
-                        <span>$59.99</span>
-                    </div>
-                    <div class="flex justify-between items-center mb-2" style="font-size: 0.95rem;">
-                        <span class="text-muted"><i class="fas fa-layer-group" style="font-size: 0.8rem; margin-right: 5px; color: var(--primary);"></i> Developer Sticker Pack <span style="background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; margin-left: 5px;">x2</span></span>
-                        <span>$29.98</span>
-                    </div>
+                    <p style="color:var(--text-muted);">Loading...</p>
                 </div>
                 <div class="flex justify-between items-center text-muted mb-2">
                     <span>Transmission Protocol</span>
@@ -65,7 +62,7 @@
                 </div>
                 <div class="summary-total" style="border-top: none; padding-top: 0; margin-top: 10px;">
                     <span>Total Resource</span>
-                    <span id="checkout-total" style="color: var(--primary);">$89.97</span>
+                    <span id="checkout-total" style="color: var(--primary);">$0.00</span>
                 </div>
             </div>
         </div>
@@ -88,5 +85,108 @@
             </div>
         </div>
     </footer>
+
+    <script src="js/shared.js"></script>
+    <script>
+    let cartData = null;
+
+    async function loadCheckoutSummary() {
+        const user = getUser();
+        if (!user) { window.location.href = 'login.html'; return; }
+
+        // Pre-fill form with user data
+        document.getElementById('fullname').value = user.name || '';
+        document.getElementById('email').value = user.email || '';
+
+        try {
+            const res = await fetch(`${API}/cart/${user._id}`);
+            const cart = await res.json();
+            cartData = cart;
+
+            const summaryEl = document.getElementById('checkout-items-summary');
+            const totalEl = document.getElementById('checkout-total');
+
+            if (!cart.items || cart.items.length === 0) {
+                summaryEl.innerHTML = '<p style="color:var(--text-muted);">Cart is empty. <a href="index.html" style="color:var(--primary);">Go shopping</a></p>';
+                totalEl.textContent = '$0.00';
+                return;
+            }
+
+            summaryEl.innerHTML = cart.items.map(item => `
+                <div class="flex justify-between items-center mb-2" style="font-size: 0.95rem;">
+                    <span class="text-muted"><i class="fas fa-layer-group" style="font-size: 0.8rem; margin-right: 5px; color: var(--primary);"></i> ${item.name} <span style="background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; margin-left: 5px;">x${item.quantity}</span></span>
+                    <span>$${(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+            `).join('');
+
+            totalEl.textContent = '$' + cart.total.toFixed(2);
+        } catch (err) {
+            console.error('Failed to load checkout summary:', err);
+            showToast('Failed to load checkout data', 'error');
+        }
+    }
+
+    document.getElementById('place-order-btn').addEventListener('click', async function() {
+        const user = getUser();
+        if (!user) { window.location.href = 'login.html'; return; }
+
+        const fullname = document.getElementById('fullname').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const address = document.getElementById('address').value.trim();
+
+        if (!fullname || !email || !address) {
+            showToast('Please fill in all delivery parameters', 'warning');
+            return;
+        }
+
+        if (!cartData || !cartData.items || cartData.items.length === 0) {
+            showToast('Your cart is empty!', 'warning');
+            return;
+        }
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+        try {
+            // Step 1: Initialize mock payment
+            const payRes = await fetch(`${API}/payment/initialize`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: cartData.total, currency: 'USD' })
+            });
+            const paymentData = await payRes.json();
+
+            // Step 2: Create order
+            const orderRes = await fetch(`${API}/orders/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user._id,
+                    items: cartData.items,
+                    total: cartData.total,
+                    paymentStatus: 'completed'
+                })
+            });
+            const order = await orderRes.json();
+
+            if (orderRes.ok) {
+                showToast(`Order compiled! TXN: ${paymentData.transactionId}`, 'success');
+                setTimeout(() => window.location.href = 'orders.html', 1500);
+            } else {
+                showToast(order.message || 'Order failed', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-lock"></i> Authorize & Compile Order';
+            }
+        } catch (err) {
+            console.error('Checkout failed:', err);
+            showToast('Checkout failed. Please try again.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-lock"></i> Authorize & Compile Order';
+        }
+    });
+
+    loadCheckoutSummary();
+    </script>
 </body>
 </html>

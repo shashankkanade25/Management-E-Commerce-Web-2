@@ -13,10 +13,14 @@
             <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
         </a>
         <div class="nav-links">
+            <a href="admin.html" class="nav-link nav-admin-link" id="nav-admin-link" style="margin-right: 15px;" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
             <a href="orders.html" class="nav-link" style="margin-right: 15px;" title="Order History"><i class="fas fa-box-open"></i></a>
-            <a href="cart.html" class="nav-link" style="margin-right: 15px;" title="View Cart"><i class="fas fa-shopping-cart"></i></a>
-            <a href="login.html" class="nav-link">Sign In</a>
-            <a href="register.html" class="btn">Sign Up</a>
+            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right: 15px;" title="View Cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="nav-cart-badge" id="cart-badge-count" style="display:none;">0</span>
+            </a>
+            <a href="login.html" class="nav-link" id="nav-signin">Sign In</a>
+            <a href="register.html" class="btn" id="nav-signup">Sign Up</a>
         </div>
     </nav>
 
@@ -26,48 +30,14 @@
         </div>
         <div class="cart-layout">
             <div id="cart-items-list" class="cart-items">
-                <!-- Static Cart Item 1 -->
-                <div class="glass cart-item">
-                    <img src="assets/images/hoodie.png" alt="Hackathon Hoodie 2026" class="cart-item-img">
-                    <div class="cart-item-info">
-                        <div class="cart-item-title">Hackathon Hoodie 2026</div>
-                        <div class="cart-item-price">$59.99</div>
-                    </div>
-                    <div class="cart-qty-ctrl">
-                        <button class="qty-btn"><i class="fas fa-minus"></i></button>
-                        <span class="qty-val">1</span>
-                        <button class="qty-btn"><i class="fas fa-plus"></i></button>
-                    </div>
-                    <div class="cart-item-total">$59.99</div>
-                    <button class="icon-btn">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-                
-                <!-- Static Cart Item 2 -->
-                <div class="glass cart-item">
-                    <img src="assets/images/stickers.png" alt="Developer Sticker Pack" class="cart-item-img">
-                    <div class="cart-item-info">
-                        <div class="cart-item-title">Developer Sticker Pack</div>
-                        <div class="cart-item-price">$14.99</div>
-                    </div>
-                    <div class="cart-qty-ctrl">
-                        <button class="qty-btn"><i class="fas fa-minus"></i></button>
-                        <span class="qty-val">2</span>
-                        <button class="qty-btn"><i class="fas fa-plus"></i></button>
-                    </div>
-                    <div class="cart-item-total">$29.98</div>
-                    <button class="icon-btn">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+                <p style="color:var(--text-muted); text-align:center; padding:30px 0;">Loading cart...</p>
             </div>
             
             <div class="glass cart-summary">
                 <h3 style="margin-bottom: 25px; font-family: 'Outfit', sans-serif;">System Status</h3>
                 <div class="summary-total">
                     <span>Subtotal</span>
-                    <span id="summary-total-amt" style="color: var(--primary);">$89.97</span>
+                    <span id="summary-total-amt" style="color: var(--primary);">$0.00</span>
                 </div>
                 <button class="btn btn-block" style="padding: 16px; font-size: 1.1rem; margin-top: 10px;" id="checkout-btn">
                     Proceed to Checkout <i class="fas fa-arrow-right" style="margin-left: 5px;"></i>
@@ -96,5 +66,121 @@
             </div>
         </div>
     </footer>
+
+    <script src="js/shared.js"></script>
+    <script>
+    let currentCart = null;
+
+    function renderCart(cart) {
+        currentCart = cart;
+        const list = document.getElementById('cart-items-list');
+        const totalEl = document.getElementById('summary-total-amt');
+
+        if (!cart || !cart.items || cart.items.length === 0) {
+            list.innerHTML = `
+                <div style="text-align:center; padding:60px 0; color:var(--text-muted);">
+                    <i class="fas fa-shopping-cart" style="font-size:3rem; margin-bottom:15px; opacity:0.3;"></i>
+                    <p>Your payload bay is empty.</p>
+                    <a href="index.html" class="btn" style="margin-top:20px; display:inline-block;">Browse Store</a>
+                </div>`;
+            totalEl.textContent = '$0.00';
+            updateCartBadge();
+            return;
+        }
+
+        list.innerHTML = cart.items.map(item => `
+            <div class="glass cart-item">
+                <img src="${item.image}" alt="${item.name}" class="cart-item-img">
+                <div class="cart-item-info">
+                    <div class="cart-item-title">${item.name}</div>
+                    <div class="cart-item-price">$${item.price.toFixed(2)}</div>
+                </div>
+                <div class="cart-qty-ctrl">
+                    <button class="qty-btn" onclick="updateQty('${item.productId}', ${item.quantity - 1})"><i class="fas fa-minus"></i></button>
+                    <span class="qty-val">${item.quantity}</span>
+                    <button class="qty-btn" onclick="updateQty('${item.productId}', ${item.quantity + 1})"><i class="fas fa-plus"></i></button>
+                </div>
+                <div class="cart-item-total">$${(item.price * item.quantity).toFixed(2)}</div>
+                <button class="icon-btn" onclick="removeItem('${item.productId}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `).join('');
+
+        totalEl.textContent = '$' + cart.total.toFixed(2);
+        updateCartBadge();
+    }
+
+    async function loadCart() {
+        const user = getUser();
+        if (!user) {
+            document.getElementById('cart-items-list').innerHTML = `
+                <div style="text-align:center; padding:60px 0; color:var(--text-muted);">
+                    <i class="fas fa-lock" style="font-size:3rem; margin-bottom:15px; opacity:0.3;"></i>
+                    <p>Please sign in to view your cart.</p>
+                    <a href="login.html" class="btn" style="margin-top:20px; display:inline-block;">Sign In</a>
+                </div>`;
+            return;
+        }
+        try {
+            const res = await fetch(`${API}/cart/${user._id}`);
+            const cart = await res.json();
+            renderCart(cart);
+        } catch (err) {
+            console.error('Failed to load cart:', err);
+            showToast('Failed to load cart. Is the server running?', 'error');
+        }
+    }
+
+    async function updateQty(productId, newQty) {
+        const user = getUser();
+        if (!user) return;
+        if (newQty < 1) { removeItem(productId); return; }
+        try {
+            const res = await fetch(`${API}/cart/update`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user._id, productId, quantity: newQty })
+            });
+            const cart = await res.json();
+            renderCart(cart);
+            showToast('Quantity updated', 'info');
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to update quantity', 'error');
+        }
+    }
+
+    async function removeItem(productId) {
+        const user = getUser();
+        if (!user) return;
+        try {
+            const res = await fetch(`${API}/cart/remove/${user._id}/${productId}`, { method: 'DELETE' });
+            const cart = await res.json();
+            renderCart(cart);
+            showToast('Item removed from cart', 'info');
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to remove item', 'error');
+        }
+    }
+
+    // Checkout button -> go to checkout page
+    document.getElementById('checkout-btn').addEventListener('click', function() {
+        const user = getUser();
+        if (!user) {
+            showToast('Please sign in first', 'warning');
+            setTimeout(() => window.location.href = 'login.html', 1000);
+            return;
+        }
+        if (!currentCart || !currentCart.items || currentCart.items.length === 0) {
+            showToast('Your cart is empty!', 'warning');
+            return;
+        }
+        window.location.href = 'checkout.html';
+    });
+
+    loadCart();
+    </script>
 </body>
 </html>

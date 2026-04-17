@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <nav class="navbar">
+    <nav class="navbar" id="navbar">
         <a href="index.html" class="nav-brand">
             <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
         </a>
@@ -17,20 +17,24 @@
     <div class="container auth-wrapper">
         <div class="glass auth-container">
             <h2>Welcome Back</h2>
-            <form action="index.html" method="GET">
+            <form id="login-form">
                 <div class="form-group">
                     <label>Email Address</label>
-                    <input type="text" id="email" class="form-control" placeholder="developer@backforge.com">
+                    <input type="text" id="email" class="form-control" placeholder="developer@backforge.com" required>
                 </div>
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="text" id="password" class="form-control" placeholder="••••••••">
+                    <input type="password" id="password" class="form-control" placeholder="••••••••" required>
                 </div>
-                <button type="submit" class="btn btn-block" style="margin-top: 15px;">
+                <div id="login-error" style="color:#ff6b6b; font-size:0.9rem; margin-top:10px; display:none;"></div>
+                <button type="submit" class="btn btn-block" style="margin-top: 15px;" id="login-btn">
                     <i class="fas fa-sign-in-alt"></i> Access Account
                 </button>
             </form>
             <p>Don't have an account? <a href="register.html">Create one</a></p>
+            <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--card-border); text-align:center;">
+                <p style="font-size:0.8rem; color:var(--text-dim); margin-top:0;">Demo: <span style="color:var(--text-muted); font-family:'JetBrains Mono',monospace;">demo@backforge.com</span> / <span style="color:var(--text-muted); font-family:'JetBrains Mono',monospace;">demo1234</span></p>
+            </div>
         </div>
     </div>
 
@@ -51,5 +55,56 @@
             </div>
         </div>
     </footer>
+
+    <script src="js/shared.js"></script>
+    <script>
+    // If user is already logged in, redirect to home
+    const existingUser = getUser();
+    if (existingUser) { window.location.href = 'index.html'; }
+
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+        const errorEl = document.getElementById('login-error');
+        const btn = document.getElementById('login-btn');
+
+        if (!email || !password) {
+            errorEl.textContent = 'Please fill in all fields.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+        errorEl.style.display = 'none';
+
+        try {
+            const res = await fetch(`${API}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.token) {
+                localStorage.setItem('forgeUser', JSON.stringify(data));
+                showToast('Welcome back, ' + data.name + '!', 'success');
+                setTimeout(() => window.location.href = 'index.html', 800);
+            } else {
+                errorEl.textContent = data.message || 'Invalid credentials.';
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Access Account';
+            }
+        } catch (err) {
+            errorEl.textContent = 'Server error. Make sure backend is running.';
+            errorEl.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Access Account';
+            console.error('Login error:', err);
+        }
+    });
+    </script>
 </body>
 </html>

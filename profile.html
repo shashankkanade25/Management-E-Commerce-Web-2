@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeCart | Identity Profile</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <a href="index.html" class="nav-brand">
+            <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
+        </a>
+        <div class="nav-links">
+            <a href="admin.html" class="nav-link nav-admin-link" id="nav-admin-link" style="margin-right: 15px;" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
+            <a href="orders.html" class="nav-link" style="margin-right: 15px;" title="Order History"><i class="fas fa-box-open"></i></a>
+            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right: 15px;" title="View Cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="nav-cart-badge" id="cart-badge-count" style="display:none;">0</span>
+            </a>
+            <a href="login.html" class="nav-link" id="nav-signin">Sign In</a>
+            <a href="register.html" class="btn" id="nav-signup">Sign Up</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Identity Credentials</h1>
+        </div>
+
+        <div class="profile-layout" id="profile-container" style="display:none;">
+            <div class="glass profile-card">
+                <div class="profile-avatar" id="profile-avatar">J</div>
+                <div class="profile-name" id="profile-name">John Doe</div>
+                <div class="profile-email" id="profile-email">john@example.com</div>
+                <div id="profile-role-badge"></div>
+                
+                <div class="profile-stats">
+                    <div class="profile-stat">
+                        <div class="profile-stat-val" id="stat-orders">0</div>
+                        <div class="profile-stat-label">Executions</div>
+                    </div>
+                    <div class="profile-stat">
+                        <div class="profile-stat-val" id="stat-spent">$0</div>
+                        <div class="profile-stat-label">Resources</div>
+                    </div>
+                </div>
+
+                <div class="profile-actions">
+                    <a href="orders.html" class="profile-action-btn">
+                        <i class="fas fa-box-open"></i> Execution History
+                    </a>
+                    <a href="cart.html" class="profile-action-btn">
+                        <i class="fas fa-shopping-cart"></i> View Payload
+                    </a>
+                    <button class="profile-action-btn danger-action" onclick="logout()" style="width:100%;">
+                        <i class="fas fa-sign-out-alt"></i> Terminate Session
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass profile-section">
+                <h3><i class="fas fa-shield-alt"></i> Security Clearance & Access</h3>
+                <p style="color:var(--text-muted); margin-bottom:20px; line-height:1.6;">Your ForgeCart identity grants you level-1 access to all standard developer gear and digital assets. Security parameters are currently nominal.</p>
+                
+                <div style="background:rgba(0,0,0,0.2); border:1px solid var(--card-border); padding:20px; border-radius:var(--radius-sm); margin-bottom:24px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <span style="color:var(--text-dim); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px;">Hardware Key ID</span>
+                        <span style="font-family:'JetBrains Mono',monospace; color:var(--primary); font-size:0.9rem;" id="user-id">...</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="color:var(--text-dim); font-size:0.85rem; text-transform:uppercase; letter-spacing:1px;">Clearance Level</span>
+                        <span style="color:var(--success); font-weight:600; font-size:0.9rem;" id="clearance-level">Active</span>
+                    </div>
+                </div>
+
+                <h3><i class="fas fa-cog"></i> Node Configuration</h3>
+                <form id="update-profile-form">
+                    <div class="form-group">
+                        <label>Preferred Designation (Name)</label>
+                        <input type="text" id="update-name" class="form-control" disabled>
+                        <p style="font-size:0.75rem; color:var(--text-dim); margin-top:6px;"><i class="fas fa-lock" style="margin-right:4px;"></i>Locked for hackathon demo.</p>
+                    </div>
+                    <div class="form-group">
+                        <label>Communication Protocol (Email)</label>
+                        <input type="email" id="update-email" class="form-control" disabled>
+                        <p style="font-size:0.75rem; color:var(--text-dim); margin-top:6px;"><i class="fas fa-lock" style="margin-right:4px;"></i>Locked for hackathon demo.</p>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="unauth-message" style="display:none; text-align:center; padding:80px 0;">
+            <i class="fas fa-user-lock" style="font-size:3rem; color:var(--text-dim); margin-bottom:20px;"></i>
+            <h2 style="color:var(--text-bright); margin-bottom:10px;">Access Denied</h2>
+            <p style="color:var(--text-muted); margin-bottom:24px;">You must initiate a session to view identity credentials.</p>
+            <a href="login.html" class="btn"><i class="fas fa-sign-in-alt"></i> Access Account</a>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fas fa-layer-group"></i> ForgeCart
+                <span>· BackForge 2026</span>
+            </div>
+            <div class="footer-links">
+                <a href="index.html">Store</a>
+                <a href="cart.html">Cart</a>
+                <a href="orders.html">Orders</a>
+                <a href="profile.html">Account</a>
+            </div>
+            <div class="footer-copy">
+                Built for the BackForge Hackathon · Designed with precision
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/shared.js"></script>
+    <script>
+    async function initProfile() {
+        const user = getUser();
+        if (!user) {
+            document.getElementById('profile-container').style.display = 'none';
+            document.getElementById('unauth-message').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('profile-container').style.display = 'grid';
+        
+        // Populate profile cards
+        document.getElementById('profile-avatar').textContent = user.name.charAt(0).toUpperCase();
+        document.getElementById('profile-name').textContent = user.name;
+        document.getElementById('profile-email').textContent = user.email;
+        document.getElementById('user-id').textContent = user._id;
+        
+        document.getElementById('update-name').value = user.name;
+        document.getElementById('update-email').value = user.email;
+
+        // Role badge
+        const badgeInfo = user.role === 'admin' 
+            ? { class: 'role-admin', icon: 'fas fa-shield-alt', text: 'Administrator' }
+            : { class: 'role-user', icon: 'fas fa-user', text: 'Standard Developer' };
+        
+        document.getElementById('profile-role-badge').innerHTML = `
+            <div class="profile-role ${badgeInfo.class}">
+                <i class="${badgeInfo.icon}"></i> ${badgeInfo.text}
+            </div>
+        `;
+
+        if (user.role === 'admin') {
+            document.getElementById('clearance-level').innerHTML = '<i class="fas fa-star" title="Maximum Override Array"></i> Root Access';
+            document.getElementById('clearance-level').style.color = 'var(--primary)';
+        }
+
+        // Fetch user stats (orders)
+        try {
+            const res = await fetch(`${API}/orders/${user._id}`);
+            const orders = await res.json();
+            
+            if (orders && orders.length) {
+                document.getElementById('stat-orders').textContent = orders.length;
+                const totalSpent = orders.reduce((acc, o) => acc + o.total, 0);
+                document.getElementById('stat-spent').textContent = '$' + totalSpent.toFixed(0);
+            }
+        } catch (err) {
+            console.error('Failed to load stats', err);
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('forgeUser');
+        showToast('Session terminated', 'info');
+        setTimeout(() => window.location.href = 'index.html', 800);
+    }
+
+    initProfile();
+    </script>
+</body>
+</html>

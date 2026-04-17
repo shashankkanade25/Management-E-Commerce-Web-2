@@ -13,10 +13,14 @@
             <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
         </a>
         <div class="nav-links">
+            <a href="admin.html" class="nav-link nav-admin-link" id="nav-admin-link" style="margin-right: 15px;" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
             <a href="orders.html" class="nav-link" style="margin-right: 15px;" title="Order History"><i class="fas fa-box-open"></i></a>
-            <a href="cart.html" class="nav-link" style="margin-right: 15px;" title="View Cart"><i class="fas fa-shopping-cart"></i></a>
-            <a href="login.html" class="nav-link">Sign In</a>
-            <a href="register.html" class="btn">Sign Up</a>
+            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right: 15px;" title="View Cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="nav-cart-badge" id="cart-badge-count" style="display:none;">0</span>
+            </a>
+            <a href="login.html" class="nav-link" id="nav-signin">Sign In</a>
+            <a href="register.html" class="btn" id="nav-signup">Sign Up</a>
         </div>
     </nav>
 
@@ -25,33 +29,7 @@
             <i class="fas fa-arrow-left"></i> Return to Directory
         </a>
         <div id="product-details-container">
-            <!-- Static Product Details -->
-            <div class="product-details">
-                <div class="product-img-wrapper flex items-center justify-center">
-                    <img src="assets/images/hoodie.png" alt="Hackathon Hoodie 2026" class="product-img" style="width: 100%; border-radius:16px;">
-                </div>
-                <div class="product-info glass" style="padding: 40px; text-align: left; height: 100%; display: flex; flex-direction: column; justify-content: center;">
-                    <div class="product-category" style="margin-bottom: 15px;"><i class="fas fa-fingerprint"></i> clothing</div>
-                    <h1>Hackathon Hoodie 2026</h1>
-                    <div class="price">
-                        $59.99
-                        <span class="badge"><i class="fas fa-check-circle"></i> In Stock</span>
-                    </div>
-                    <p class="desc">Exclusive premium clothing. Built for hackathon participants and active developers. Show off your skills with this official BackForge item, designed for maximum efficiency and style during long sprints.</p>
-                    
-                    <ul class="feature-list">
-                        <li><i class="fas fa-shield-alt"></i> Official BackForge Merchandise</li>
-                        <li><i class="fas fa-shipping-fast"></i> Instant or Expedited Delivery</li>
-                        <li><i class="fas fa-undo"></i> 30-Day Developer Satisfaction</li>
-                    </ul>
-
-                    <div class="action-row">
-                        <button class="btn" style="flex: 1; padding: 16px; font-size: 1.1rem;">
-                            <i class="fas fa-cart-arrow-down"></i> Initialize Payload
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <p style="color:var(--text-muted); text-align:center; padding:60px 0;">Loading product details...</p>
         </div>
     </div>
 
@@ -72,5 +50,63 @@
             </div>
         </div>
     </footer>
+
+    <script src="js/shared.js"></script>
+    <script>
+    async function loadProduct() {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+        const container = document.getElementById('product-details-container');
+
+        if (!id) {
+            container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:60px 0;">No product selected. <a href="index.html" style="color:var(--primary)">Go back</a></p>';
+            return;
+        }
+        try {
+            const res = await fetch(`${API}/products/${id}`);
+            const p = await res.json();
+            if (!res.ok) {
+                container.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:60px 0;">Product not found.</p>';
+                return;
+            }
+            document.title = `ForgeCart | ${p.name}`;
+            const stockBadge = p.stock > 0
+                ? `<span class="badge"><i class="fas fa-check-circle"></i> In Stock (${p.stock})</span>`
+                : `<span class="badge" style="background:rgba(255,60,60,0.15);color:#ff6b6b;"><i class="fas fa-times-circle"></i> Out of Stock</span>`;
+
+            container.innerHTML = `
+                <div class="product-details">
+                    <div class="product-img-wrapper flex items-center justify-center">
+                        <img src="${p.image}" alt="${p.name}" class="product-img" style="width: 100%; border-radius:16px;">
+                    </div>
+                    <div class="product-info glass" style="padding: 40px; text-align: left; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                        <div class="product-category" style="margin-bottom: 15px;"><i class="fas fa-fingerprint"></i> ${p.category}</div>
+                        <h1>${p.name}</h1>
+                        <div class="price">
+                            $${p.price.toFixed(2)}
+                            ${stockBadge}
+                        </div>
+                        <p class="desc">${p.description}</p>
+                        <ul class="feature-list">
+                            <li><i class="fas fa-shield-alt"></i> Official BackForge Merchandise</li>
+                            <li><i class="fas fa-shipping-fast"></i> Instant or Expedited Delivery</li>
+                            <li><i class="fas fa-undo"></i> 30-Day Developer Satisfaction</li>
+                        </ul>
+                        <div class="action-row">
+                            <button class="btn" style="flex: 1; padding: 16px; font-size: 1.1rem;" onclick="addToCart('${p._id}')" ${p.stock <= 0 ? 'disabled style="opacity:0.5;pointer-events:none;flex:1;padding:16px;font-size:1.1rem;"' : ''}>
+                                <i class="fas fa-cart-arrow-down"></i> Initialize Payload
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } catch (err) {
+            container.innerHTML = '<p style="color:#ff6b6b;text-align:center;padding:60px 0;">Failed to load product. Is the server running?</p>';
+            console.error(err);
+        }
+    }
+
+    loadProduct();
+    </script>
 </body>
 </html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeCart | Command Center</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <a href="index.html" class="nav-brand">
+            <i class="fas fa-layer-group"></i> <span>ForgeCart</span>
+        </a>
+        <div class="nav-links">
+            <a href="admin.html" class="nav-link nav-admin-link" id="nav-admin-link" style="margin-right: 15px; color:var(--primary);" title="Admin Dashboard"><i class="fas fa-tachometer-alt"></i></a>
+            <a href="orders.html" class="nav-link" style="margin-right: 15px;" title="Order History"><i class="fas fa-box-open"></i></a>
+            <a href="cart.html" class="nav-link nav-cart-wrapper" style="margin-right: 15px;" title="View Cart">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="nav-cart-badge" id="cart-badge-count" style="display:none;">0</span>
+            </a>
+            <a href="login.html" class="nav-link" id="nav-signin">Sign In</a>
+            <a href="register.html" class="btn" id="nav-signup">Sign Up</a>
+        </div>
+    </nav>
+
+    <div class="container" id="admin-container" style="display:none;">
+        <div class="page-header">
+            <h1 class="page-title"><i class="fas fa-satellite-dish" style="font-size:1.6rem; color:var(--primary); margin-right:12px;"></i>Command Center</h1>
+            <button class="btn btn-outline" onclick="loadAdminStats()"><i class="fas fa-sync-alt"></i> Refresh Telemetry</button>
+        </div>
+
+        <div class="admin-stats-grid">
+            <div class="glass stat-card">
+                <div class="stat-card-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-card-value" id="stat-users">0</div>
+                <div class="stat-card-label">Active Nodes (Users)</div>
+            </div>
+            <div class="glass stat-card">
+                <div class="stat-card-icon"><i class="fas fa-boxes"></i></div>
+                <div class="stat-card-value" id="stat-products">0</div>
+                <div class="stat-card-label">Asset Registry (Products)</div>
+            </div>
+            <div class="glass stat-card">
+                <div class="stat-card-icon"><i class="fas fa-shopping-bag"></i></div>
+                <div class="stat-card-value" id="stat-orders">0</div>
+                <div class="stat-card-label">Executions (Orders)</div>
+            </div>
+            <div class="glass stat-card">
+                <div class="stat-card-icon"><i class="fas fa-dollar-sign"></i></div>
+                <div class="stat-card-value" id="stat-revenue">$0</div>
+                <div class="stat-card-label">Total Resources</div>
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:32px; align-items:start;">
+            <div class="glass" style="padding:32px;">
+                <h3 class="admin-section-title"><i class="fas fa-exclamation-triangle"></i> Inventory Alerts</h3>
+                <div id="low-stock-list">
+                    <p style="color:var(--text-muted); text-align:center; padding:20px 0;">Loading telemetry...</p>
+                </div>
+            </div>
+            
+            <div class="glass" style="padding:32px;">
+                <h3 class="admin-section-title"><i class="fas fa-stream"></i> Recent Executions</h3>
+                <div id="recent-orders-list">
+                    <p style="color:var(--text-muted); text-align:center; padding:20px 0;">Loading telemetry...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="unauth-message" style="display:none; text-align:center; padding:100px 0;">
+        <i class="fas fa-radiation" style="font-size:4rem; color:var(--danger); margin-bottom:20px; animation:spinSlow 10s linear infinite;"></i>
+        <h2 style="color:var(--danger); margin-bottom:10px; font-size:2rem; font-family:'Outfit',sans-serif;">ACCESS RESTRICTED</h2>
+        <p style="color:var(--text-muted); margin-bottom:24px; max-width:400px; margin-left:auto; margin-right:auto;">This node requires Root Protocol clearance. Your current identity token lacks sufficient parameters.</p>
+        <a href="index.html" class="btn"><i class="fas fa-arrow-left"></i> Return to Safe Zone</a>
+    </div>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <i class="fas fa-layer-group"></i> ForgeCart
+                <span>· BackForge 2026</span>
+            </div>
+            <div class="footer-links">
+                <a href="index.html">Store</a>
+                <a href="cart.html">Cart</a>
+                <a href="orders.html">Orders</a>
+                <a href="profile.html">Account</a>
+            </div>
+            <div class="footer-copy">
+                Built for the BackForge Hackathon · Designed with precision
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/shared.js"></script>
+    <script>
+    async function checkAdminAccess() {
+        const user = getUser();
+        if (!user || user.role !== 'admin') {
+            document.getElementById('admin-container').style.display = 'none';
+            document.getElementById('unauth-message').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('admin-container').style.display = 'block';
+        loadAdminStats();
+    }
+
+    async function loadAdminStats() {
+        try {
+            const res = await fetch(`${API}/admin/stats`);
+            const data = await res.json();
+            
+            if (data.success) {
+                const stats = data.stats;
+                document.getElementById('stat-users').textContent = stats.totalUsers;
+                document.getElementById('stat-products').textContent = stats.totalProducts;
+                document.getElementById('stat-orders').textContent = stats.totalOrders;
+                document.getElementById('stat-revenue').textContent = '$' + Number(stats.totalRevenue).toLocaleString();
+
+                // Low stock
+                const stockList = document.getElementById('low-stock-list');
+                if (stats.lowStockProducts.length === 0) {
+                    stockList.innerHTML = '<p style="color:var(--success); text-align:center; padding:20px 0;"><i class="fas fa-check-circle" style="margin-right:8px;"></i>All inventory levels nominal.</p>';
+                } else {
+                    stockList.innerHTML = stats.lowStockProducts.map(p => `
+                        <div class="low-stock-item">
+                            <div>
+                                <div style="color:var(--text-main); font-weight:600; font-size:0.95rem;">${p.name}</div>
+                                <div style="color:var(--text-dim); font-size:0.8rem; font-family:'JetBrains Mono',monospace;">ID: ${p._id.slice(-6)}</div>
+                            </div>
+                            <div class="stock-count ${p.stock === 0 ? 'critical' : 'warning'}">
+                                ${p.stock} units
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                // Recent Orders
+                const ordersList = document.getElementById('recent-orders-list');
+                if (stats.recentOrders.length === 0) {
+                    ordersList.innerHTML = '<p style="color:var(--text-muted); text-align:center; padding:20px 0;">No active executions found.</p>';
+                } else {
+                    ordersList.innerHTML = stats.recentOrders.map(o => `
+                        <div class="low-stock-item" style="cursor:pointer;" onclick="window.location.href='orders.html'">
+                            <div>
+                                <div style="color:var(--text-main); font-weight:600; font-size:0.95rem;">${o.userId ? o.userId.name : 'Unknown Node'}</div>
+                                <div style="color:var(--text-dim); font-size:0.8rem; font-family:'JetBrains Mono',monospace;">TXN: ${o._id.slice(-8).toUpperCase()}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="color:var(--primary); font-weight:700;">$${o.total.toFixed(2)}</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${new Date(o.createdAt).toLocaleDateString()}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                showToast('Telemetry refreshed', 'success');
+            }
+        } catch (err) {
+            console.error('Failed to load admin stats:', err);
+            showToast('Connection failed. Server offline?', 'error');
+        }
+    }
+
+    checkAdminAccess();
+    </script>
+</body>
+</html>
